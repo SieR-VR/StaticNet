@@ -84,7 +84,7 @@ struct fixed8bit {
     }
 };
 
-class MyNet {
+class MyFixNet {
 public:
     fixed8bit W = 0b01000000, b = 0b00000000;
 

@@ -1,12 +1,12 @@
 #include <iostream>
 #include <vector>
 
-#include "MyNet.h"
+#include "MyFixNet.h"
 
 using namespace std;
 
 int main() {
-    MyNet mynet;
+    MyFixNet mynet;
     cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
 
     vector<fixed8bit> xinput;
