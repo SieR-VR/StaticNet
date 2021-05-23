@@ -13,15 +13,13 @@ int main() {
     vector<fixed8bit> yinput;
 
     for(int i = 0; i < 10; i++) {
-        xinput.push_back(fixed8bit(i+0b01000000)); 
-        yinput.push_back(fixed8bit(i+0b01000000)); 
+        xinput.push_back(fixed8bit(i + 0x70)); 
+        yinput.push_back(fixed8bit(i + 0x70)); 
     }
 
-    cout << mynet.getCost(xinput, yinput).mean() << endl;
-    cout << mynet.getCostDiff(xinput, yinput).mean() << endl;
-
     for(int i = 0; i < 1000; i++) {
-        mynet.gradientDescent(fixed8bit(0b01100000), xinput, yinput);
+        mynet.gradientDescent(fixed8bit(0b01000000), xinput, yinput);
+        if(i % 100 == 0) cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
     }
 
     cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
