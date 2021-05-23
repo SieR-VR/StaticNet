@@ -46,7 +46,7 @@ float fixed8bit::mean()
     return value * 0.0078125f;
 }
 
-fixed8bit MyFixNet::getCost(std::vector<fixed8bit> inputs, std::vector<fixed8bit> results)
+fixed8bit MyFixNet::getCost(std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results)
 {
     if (inputs.size() != results.size())
         return 0;
@@ -61,27 +61,31 @@ fixed8bit MyFixNet::getCost(std::vector<fixed8bit> inputs, std::vector<fixed8bit
     return resultCost / inputs.size();
 }
 
-fixed8bit MyFixNet::getCostDiff(std::vector<fixed8bit> inputs, std::vector<fixed8bit> results)
+fixed8bit MyFixNet::getCostDiff(std::vector<fixed8bit> inputs, fixed8bit result, unsigned char index)
 {
-    if (inputs.size() != results.size())
-        return 0;
     fixed8bit resultCostDiff = 0;
 
     for (int i = 0; i < inputs.size(); i++)
     {
-        fixed8bit costDiff = (linearReg(inputs[i]) - results[i]) * inputs[i];
+        fixed8bit costDiff = (linearReg(inputs) - result) * inputs[i];
         resultCostDiff += costDiff;
     }
 
     return resultCostDiff / inputs.size();
 }
 
-fixed8bit MyFixNet::linearReg(fixed8bit input)
+fixed8bit MyFixNet::linearReg(std::vector<fixed8bit> input)
 {
-    return W * input + b;
+    fixed8bit result = 0x00;
+    for(unsigned char i = 0; i < W.size(); i++)
+        result += W[i] * input[i];
+    result += b;
+    return result;
 }
 
-fixed8bit MyFixNet::gradientDescent(fixed8bit alpha, std::vector<fixed8bit> inputs, std::vector<fixed8bit> results)
+fixed8bit MyFixNet::gradientDescent(fixed8bit alpha, std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results)
 {
-    W -= getCostDiff(inputs, results) * alpha;
+    for(int i = 0; i < W.size(); i++ ) {
+        W[i] -= getCostDiff(inputs[i], results[i], i) * alpha;
+    }
 }

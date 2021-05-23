@@ -6,14 +6,15 @@
 using namespace std;
 
 int main() {
-    MyFixNet mynet;
-    cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
+    MyFixNet mynet(1);
+    cout << mynet.W[0].mean() << " " << mynet.b.mean() << endl;
 
-    vector<fixed8bit> xinput;
+    vector<vector<fixed8bit>> xinput;
     vector<fixed8bit> yinput;
 
     for(int i = 0; i < 10; i++) {
-        xinput.push_back(fixed8bit(i + 0x70)); 
+        std::vector<fixed8bit> temp = {fixed8bit(i + 0x70)};
+        xinput.push_back(temp); 
         yinput.push_back(fixed8bit(i + 0x70)); 
     }
 
@@ -21,5 +22,5 @@ int main() {
         mynet.gradientDescent(fixed8bit(0b01000000), xinput, yinput);
     }
 
-    cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
+    cout << mynet.W[0].mean() << " " << mynet.b.mean() << endl;
 }

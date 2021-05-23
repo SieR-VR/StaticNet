@@ -7,6 +7,7 @@
 struct fixed8bit {
     char value;
 
+    fixed8bit() : value(0x00) {}
     fixed8bit(char val) : value(val) {}
 
     fixed8bit operator+(fixed8bit operand);
@@ -21,14 +22,18 @@ struct fixed8bit {
 
 class MyFixNet {
 public:
-    fixed8bit W, b;
+    std::vector<fixed8bit> W;
+    fixed8bit b;
 
-    MyFixNet(fixed8bit mW = 0b01000000, fixed8bit mB = 0b00000000): W(mW), b(mB) {}
+    MyFixNet(unsigned int argumentsNum) {
+        W.assign(argumentsNum, fixed8bit(0x40));
+        b = 0x00;
+    }
 
-    fixed8bit getCost(std::vector<fixed8bit> inputs, std::vector<fixed8bit> results);
-    fixed8bit getCostDiff(std::vector<fixed8bit> inputs, std::vector<fixed8bit> results);
-    fixed8bit linearReg(fixed8bit input);
-    fixed8bit gradientDescent(fixed8bit alpha, std::vector<fixed8bit> inputs, std::vector<fixed8bit> results);
+    fixed8bit getCost(std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results);
+    fixed8bit getCostDiff(std::vector<fixed8bit> inputs, fixed8bit result, unsigned char index);
+    fixed8bit linearReg(std::vector<fixed8bit> input);
+    fixed8bit gradientDescent(fixed8bit alpha, std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results);
 };
 
 #endif
