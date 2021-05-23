@@ -2,29 +2,29 @@
 
 fixed8bit fixed8bit::operator+(fixed8bit operand)
 {
-    if((short) operand.value + value > CHAR_MAX) return 0x7F;
-    else if((short) operand.value + value < CHAR_MIN) return 0x80;
+    if(((short) operand.value + value) > CHAR_MAX) return CHAR_MAX;
+    else if(((short) operand.value + value) < CHAR_MIN) return CHAR_MIN;
     else return operand.value + value;
 }
 
 fixed8bit fixed8bit::operator+=(fixed8bit operand)
 {
-    if((short) operand.value + value > CHAR_MAX) value = 0x7F;
-    else if((short) operand.value + value < CHAR_MIN) value = 0x80;
+    if(((short) operand.value + value) > CHAR_MAX) value = CHAR_MAX;
+    else if(((short) operand.value + value) < CHAR_MIN) value = CHAR_MIN;
     else value = operand.value + value;
 }
 
 fixed8bit fixed8bit::operator-(fixed8bit operand)
 {
-    if((short) operand.value - value > CHAR_MAX) return 0x7F;
-    else if((short) operand.value - value < CHAR_MIN) return 0x80;
+    if(((short) value - operand.value) > CHAR_MAX) return CHAR_MAX;
+    else if(((short) value - operand.value) < CHAR_MIN) return CHAR_MIN;
     else return value - operand.value;
 }
 
 fixed8bit fixed8bit::operator-=(fixed8bit operand)
 {
-    if((short) operand.value - value > CHAR_MAX) value = 0x7F;
-    else if((short) operand.value - value < CHAR_MIN) value = 0x80;
+    if(((short) value - operand.value) > CHAR_MAX) value = CHAR_MAX;
+    else if(((short) value - operand.value) < CHAR_MIN) value = CHAR_MIN;
     else value = value - operand.value;
 }
 

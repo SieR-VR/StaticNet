@@ -17,9 +17,8 @@ int main() {
         yinput.push_back(fixed8bit(i + 0x70)); 
     }
 
-    for(int i = 0; i < 1000; i++) {
+    for(int i = 0; i < 100; i++) {
         mynet.gradientDescent(fixed8bit(0b01000000), xinput, yinput);
-        if(i % 100 == 0) cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
     }
 
     cout << mynet.W.mean() << " " << mynet.b.mean() << endl;
