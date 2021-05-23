@@ -1,12 +1,12 @@
 #include <iostream>
 #include <vector>
 
-#include "MyFixNet.h"
+#include "FixedLinearRegression.h"
 
 using namespace std;
 
 int main() {
-    MyFixNet mynet(1);
+    FixedLinearRegression mynet(1);
     cout << mynet.W[0].mean() << " " << mynet.b.mean() << endl;
 
     vector<vector<fixed8bit>> xinput;
