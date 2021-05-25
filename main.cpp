@@ -2,8 +2,8 @@
 #include <vector>
 #include <time.h>
 
-#include "FixedLinearRegression.h"
-#include "LinearRegression.h"
+#include "Fixed/FixedLinearRegression.h"
+#include "Float/LinearRegression.h"
 
 using namespace std;
 
