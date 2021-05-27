@@ -24,6 +24,14 @@ std::vector<float> LogisticClassification::softmax(std::vector<float> input) {
     return res;
 }
 
+float LogisticClassification::getCost(std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results) {
+    float res = 0;
+    for(int i = 0; i < nodes.size(); i++)
+        res += nodes[i].getCost(inputs, results[i]);
+
+    return res;
+}
+
 void LogisticClassification::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results) {
     for(int i = 0; i < nodes.size(); i++) {
         nodes[i].gradientDescent(alpha, inputs, results[i]);

@@ -17,6 +17,7 @@ public:
 
     std::vector<float> logisticClassify(std::vector<float> input);
     std::vector<float> softmax(std::vector<float> input);
+    float getCost(std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
     void gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
 };
 

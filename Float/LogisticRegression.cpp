@@ -58,10 +58,9 @@ void LogisticRegression::gradientDescent(float alpha, std::vector<std::vector<fl
     std::vector<float> mW = W;
     float mB = b;
     
-    for (int i = 0; i < W.size(); i++) {
+    for (int i = 0; i < W.size(); i++)
         mW[i] -= getCostDiff(inputs, results, i) * alpha;
-        mB -= getBiasDiff(inputs, results) * alpha;
-    }
+    mB -= getBiasDiff(inputs, results) * alpha;
     
     W = mW;
     b = mB;
