@@ -1,5 +1,6 @@
 .vscode/
 main.exe
+build/
 
 train-images.idx3-ubyte
 train-labels.idx1-ubyte

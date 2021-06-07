@@ -1,4 +1,5 @@
 #include "LogisticRegression.h"
+#include "../Tools/vector_helper.h"
 #include <math.h>
 
 float LogisticRegression::getCost(std::vector<std::vector<float>> inputs, std::vector<bool> results)
@@ -9,7 +10,7 @@ float LogisticRegression::getCost(std::vector<std::vector<float>> inputs, std::v
 
     for (int i = 0; i < inputs.size(); i++)
     {
-        float cost = logisticReg(inputs[i]) - results[i];
+        float cost = logisticRegCal[i] - results[i];
         resultCost += cost * cost;
     }
 
@@ -23,7 +24,7 @@ float LogisticRegression::getCostDiff(std::vector<std::vector<float>> inputs, st
     float resultCostDiff = 0;
 
     for (int i = 0; i < inputs.size(); i++)
-        resultCostDiff += (logisticReg(inputs[i]) - results[i]) * inputs[i][index];
+        resultCostDiff += (logisticRegCal[i] - results[i]) * inputs[i][index];
 
     return resultCostDiff / inputs.size();
 }
@@ -35,7 +36,7 @@ float LogisticRegression::getBiasDiff(std::vector<std::vector<float>> inputs, st
     float resultBiasDiff = 0;
 
     for (int i = 0; i < inputs.size(); i++)
-        resultBiasDiff += (logisticReg(inputs[i]) - results[i]);
+        resultBiasDiff += logisticRegCal[i] - results[i];
 
     return resultBiasDiff / inputs.size();
 }
@@ -43,8 +44,8 @@ float LogisticRegression::getBiasDiff(std::vector<std::vector<float>> inputs, st
 float LogisticRegression::logisticReg(std::vector<float> input)
 {
     float result = 0;
-    for (int i = 0; i < W.size(); i++)
-        result += W[i] * input[i];
+    for (int i = 0; i < W.size() / 8; i++)
+        result += avx_dot_product(vector_split(input, i * 8, (i + 1) * 8), vector_split(W, i * 8, (i + 1) * 8));
     result += b;
     return sigmoid(result);
 }
@@ -53,10 +54,15 @@ float LogisticRegression::sigmoid(float input) {
     return (1 / (1 + exp(-1 * input)));
 }
 
-void LogisticRegression::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<bool> results)
+float LogisticRegression::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<bool> results)
 {
     std::vector<float> mW = W;
     float mB = b;
+
+    logisticRegCal.clear();
+    for(int i = 0; i < inputs.size(); i++)
+        logisticRegCal.push_back(logisticReg(inputs[i]));
+
     
     for (int i = 0; i < W.size(); i++)
         mW[i] -= getCostDiff(inputs, results, i) * alpha;
@@ -64,4 +70,6 @@ void LogisticRegression::gradientDescent(float alpha, std::vector<std::vector<fl
     
     W = mW;
     b = mB;
+
+    return getCost(inputs, results);
 }

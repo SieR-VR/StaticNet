@@ -2,6 +2,8 @@
 #define VECTOR_HELPER_H
 
 #include <vector>
+#include <immintrin.h>
+#include <memory>
 
 template <typename T>
 std::vector<T> vector_split(std::vector<T> input, int start, int end) {
@@ -11,5 +13,7 @@ std::vector<T> vector_split(std::vector<T> input, int start, int end) {
 
     return res;
 }
+
+float avx_dot_product(std::vector<float> a, std::vector<float> b);
 
 #endif

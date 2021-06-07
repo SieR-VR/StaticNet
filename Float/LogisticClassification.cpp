@@ -1,15 +1,24 @@
 #include "LogisticClassification.h"
 #include <math.h>
 #include <iostream>
+#include <algorithm>
 
-std::vector<float> LogisticClassification::logisticClassify(std::vector<float> input) {
+int LogisticClassification::logisticClassify(std::vector<float> input) {
     std::vector<float> logisticRegs(nodes.size());
 
     for(int i = 0; i < nodes.size(); i++) {
         logisticRegs[i] = nodes[i].logisticReg(input);
     }
 
-    return softmax(logisticRegs);
+    float res_float = 0; int index = -1; 
+    for(int i = 0; i < nodes.size(); i++) {
+        if(res_float < logisticRegs[i]) {
+            res_float = logisticRegs[i];
+            index = i;
+        }
+    }
+
+    return index;
 }
 
 std::vector<float> LogisticClassification::softmax(std::vector<float> input) {
@@ -32,8 +41,12 @@ float LogisticClassification::getCost(std::vector<std::vector<float>> inputs, st
     return res;
 }
 
-void LogisticClassification::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results) {
+float LogisticClassification::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results) {
+    float costSum = 0;
+
     for(int i = 0; i < nodes.size(); i++) {
-        nodes[i].gradientDescent(alpha, inputs, results[i]);
+        costSum += nodes[i].gradientDescent(alpha, inputs, results[i]);
     }
+
+    return costSum;
 }

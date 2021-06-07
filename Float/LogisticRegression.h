@@ -7,6 +7,7 @@ class LogisticRegression
 {
 public:
     std::vector<float> W;
+    std::vector<float> logisticRegCal;
     float b;
 
     LogisticRegression(unsigned int argumentsNum)
@@ -20,7 +21,7 @@ public:
     float getBiasDiff(std::vector<std::vector<float>> inputs, std::vector<bool> results);
     float logisticReg(std::vector<float> input);
     float sigmoid(float input);
-    void gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<bool> results);
+    float gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<bool> results);
 };
 
 #endif
