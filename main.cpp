@@ -68,7 +68,8 @@ int main()
 
     int success_num = 0;
     for(int i = 0; i < test_num; i++) {
-        if(test_label[myNet.logisticClassify(test_data[i])][i] == 1) success_num++;
+        if(test_label.at(myNet.logisticClassify(test_data[i]))[i] == 1) success_num++;
+        if(i % 100 == 99) cout << success_num << endl; 
     }
 
     cout << "Success Rate: " << (float) success_num / test_num * 100 << "%" << endl;

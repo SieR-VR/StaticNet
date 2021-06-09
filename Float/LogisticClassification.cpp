@@ -10,7 +10,7 @@ int LogisticClassification::logisticClassify(std::vector<float> input) {
         logisticRegs[i] = nodes[i].logisticReg(input);
     }
 
-    float res_float = 0; int index = -1; 
+    float res_float = -100; int index = 0; 
     for(int i = 0; i < nodes.size(); i++) {
         if(res_float < logisticRegs[i]) {
             res_float = logisticRegs[i];
