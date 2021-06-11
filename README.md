@@ -10,3 +10,5 @@ Floating point 연산은 Arduino Uno에서 돌리기엔 너무 무겁습니다. 
 
 - Linear Regression
 - Multi-Variable Linear Regression
+- Logistic Regression
+- Logistic Classification
