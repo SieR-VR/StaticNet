@@ -12,8 +12,8 @@ using namespace std;
 int main()
 {
     int image_num, label_num, image_size;
-    auto data_ = read_mnist_images("C:/Users/nwh63/Desktop/dev/MyFixNet/train-images.idx3-ubyte", image_num, image_size);
-    auto labels_ = read_mnist_labels("C:/Users/nwh63/Desktop/dev/MyFixNet/train-labels.idx1-ubyte", label_num);
+    auto data_ = read_mnist_images("./train-images.idx3-ubyte", image_num, image_size);
+    auto labels_ = read_mnist_labels("./train-labels.idx1-ubyte", label_num);
 
     vector<vector<float>> data;
 
