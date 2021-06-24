@@ -44,8 +44,8 @@ float LogisticRegression::getBiasDiff(std::vector<std::vector<float>> inputs, st
 float LogisticRegression::logisticReg(std::vector<float> input)
 {
     float result = 0;
-    for (int i = 0; i < W.size() / 8; i++)
-        result += avx_dot_product(vector_split(input, i * 8, (i + 1) * 8), vector_split(W, i * 8, (i + 1) * 8));
+    for (int i = 0; i < W.size(); i++)
+        result += input[i] * W[i];
     result += b;
     return sigmoid(result);
 }
