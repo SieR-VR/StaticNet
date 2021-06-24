@@ -9,11 +9,26 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+    if(argc != 3) {
+        cout << "Usage:\n   MyFixNet.exe {image data dir} {label data dir}" << endl;
+        return 0;
+    }
+
     int image_num, label_num, image_size;
-    auto data_ = read_mnist_images("./train-images.idx3-ubyte", image_num, image_size);
-    auto labels_ = read_mnist_labels("./train-labels.idx1-ubyte", label_num);
+
+    std::vector<unsigned char*> data_;
+    std::vector<unsigned char> labels_;
+
+    try {
+        data_ = read_mnist_images(argv[1], image_num, image_size);
+        labels_ = read_mnist_labels(argv[2], label_num);
+    }
+    catch(std::runtime_error err) {
+        cout << err.what() << endl;
+        return -1;
+    };
 
     vector<vector<float>> data;
 
