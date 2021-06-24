@@ -1,5 +1,6 @@
 .vscode/
 MyFixNet.exe
+MyFixNet
 build/
 
 train-images.idx3-ubyte
