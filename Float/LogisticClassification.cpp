@@ -50,3 +50,7 @@ float LogisticClassification::gradientDescent(float alpha, std::vector<std::vect
 
     return costSum;
 }
+
+std::string LogisticClassification::getModelData() {
+    
+}

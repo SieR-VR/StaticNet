@@ -1,6 +1,6 @@
 #include "LogisticRegression.h"
 #include "../Tools/vector_helper.h"
-#include <math.h>
+#include "../Tools/model_data_defines.h"
 
 float LogisticRegression::getCost(std::vector<std::vector<float>> inputs, std::vector<bool> results)
 {
@@ -72,4 +72,26 @@ float LogisticRegression::gradientDescent(float alpha, std::vector<std::vector<f
     b = mB;
 
     return getCost(inputs, results);
+}
+
+std::vector<uint8_t> LogisticRegression::getModelData() 
+{
+    std::vector<uint8_t> modelData;
+    modelData.push_back(static_cast<uint8_t>(modelNumberType::FLOAT));
+    modelData.push_back(static_cast<uint8_t>(modelType::LOGISTIC_REGRESSION));
+
+    for(const auto &weight : W)
+    {
+        modelData.push_back(((uint8_t*)&weight)[0]);
+        modelData.push_back(((uint8_t*)&weight)[1]);
+        modelData.push_back(((uint8_t*)&weight)[2]);
+        modelData.push_back(((uint8_t*)&weight)[3]);
+    }
+
+    modelData.push_back(((uint8_t*)&b)[0]);
+    modelData.push_back(((uint8_t*)&b)[1]);
+    modelData.push_back(((uint8_t*)&b)[2]);
+    modelData.push_back(((uint8_t*)&b)[3]);
+
+    return modelData;
 }

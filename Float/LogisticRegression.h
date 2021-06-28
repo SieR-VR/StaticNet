@@ -2,6 +2,8 @@
 #define LOGISTICREGRESSION_H
 
 #include <vector>
+#include <stdint.h>
+#include <math.h>
 
 class LogisticRegression
 {
@@ -22,6 +24,7 @@ public:
     float logisticReg(std::vector<float> input);
     float sigmoid(float input);
     float gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<bool> results);
+    std::vector<uint8_t> getModelData();
 };
 
 #endif
