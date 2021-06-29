@@ -6,6 +6,7 @@
 #include "Float/LogisticClassification.h"
 #include "Tools/load_mnist.h"
 #include "Tools/vector_helper.h"
+#include "Tools/save_model_data.h"
 
 using namespace std;
 
@@ -88,4 +89,8 @@ int main(int argc, char* argv[])
     }
 
     cout << "Success Rate: " << (float) success_num / test_num * 100 << "%" << endl;
+
+    cout << "Saving Model Data.." << endl;
+    saveModelData(myNet.getModelData(), "./Mnist.net");
+    cout << "Saving Complete!" << endl;
 }

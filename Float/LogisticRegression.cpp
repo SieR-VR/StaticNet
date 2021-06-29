@@ -80,6 +80,12 @@ std::vector<uint8_t> LogisticRegression::getModelData()
     modelData.push_back(static_cast<uint8_t>(modelNumberType::FLOAT));
     modelData.push_back(static_cast<uint8_t>(modelType::LOGISTIC_REGRESSION));
 
+    uint32_t modelSize = W.size() + 1;
+    modelData.push_back(((uint8_t*)&modelSize)[0]);
+    modelData.push_back(((uint8_t*)&modelSize)[1]);
+    modelData.push_back(((uint8_t*)&modelSize)[2]);
+    modelData.push_back(((uint8_t*)&modelSize)[3]);
+
     for(const auto &weight : W)
     {
         modelData.push_back(((uint8_t*)&weight)[0]);

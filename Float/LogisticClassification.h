@@ -3,7 +3,8 @@
 
 #include "LogisticRegression.h"
 #include <vector>
-#include <string>
+#include <stdint.h>
+#include <math.h>
 
 class LogisticClassification
 {
@@ -20,7 +21,7 @@ public:
     std::vector<float> softmax(std::vector<float> input);
     float getCost(std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
     float gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
-    std::string getModelData();
+    std::vector<uint8_t> getModelData();
 };
 
 #endif
