@@ -101,3 +101,28 @@ std::vector<uint8_t> LogisticRegression::getModelData()
 
     return modelData;
 }
+
+void LogisticRegression::loadModelData(std::vector<uint8_t> modelData)
+{
+    if(modelData[0] != static_cast<uint8_t>(modelNumberType::FLOAT))
+        throw std::runtime_error("Model number type is invalid!");
+
+    if(modelData[1] != static_cast<uint8_t>(modelType::LOGISTIC_REGRESSION))
+        throw std::runtime_error("Model type is invalid!");
+
+    W.clear();
+    b = 0.0f;
+
+    int modelSize = (modelData[5] << 24 | modelData[4] << 16 | modelData[3] << 8 | modelData[2]) - 1;
+
+    for(int i = 0; i < modelSize; i++) 
+    {
+        int temp = (modelData[9 + 4*i] << 24 | modelData[8 + 4*i] | modelData[7 + 4*i] | modelData[6 + 4*i]);
+        float weight = ((float *)&temp)[0];
+
+        W.push_back(weight);
+    }
+
+    int tempB = modelData[9 + 4 * modelSize] << 24 | modelData[8 + 4 * modelSize] << 16 | modelData[7 + 4 * modelSize] << 8 | modelData[6 + 4 * modelSize];
+    b = ((float *)&tempB)[0];
+}

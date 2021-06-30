@@ -12,85 +12,34 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    if(argc != 3) {
-        cout << "Usage:\n   MyFixNet.exe {image data dir} {label data dir}" << endl;
-        return 0;
-    }
-
-    int image_num, label_num, image_size;
-
-    std::vector<unsigned char*> data_;
-    std::vector<unsigned char> labels_;
+    vector<vector<float>> mnist_images;
+    vector<vector<bool>> mnist_labels;
 
     try {
-        data_ = read_mnist_images(argv[1], image_num, image_size);
-        labels_ = read_mnist_labels(argv[2], label_num);
+        mnist_images = get_mnist_image_float(argv[1]);
+        mnist_labels = get_mnist_label(argv[2]);
     }
     catch(std::runtime_error err) {
         cout << err.what() << endl;
         return -1;
     };
 
-    vector<vector<float>> data;
+    LogisticClassification myNet(0, 0);
 
-    for(int i = 0; i < image_num; i++) {
-        vector<float> temp;
-        for(int j = 0; j < image_size; j++) temp.push_back(((int) data_[i][j]) * 0.78125f);
-        data.push_back(temp);
+    try {
+        auto model_data = loadModelDataFromFile("./Models/Mnist.net");
+        myNet.loadModelData(model_data);
     }
-
-    vector<vector<bool>> labels;
-    for(int i = 0; i < 10; i++) {
-        vector<bool> temp;
-        for(int j = 0; j < label_num; j++) temp.push_back(labels_[j] == i);
-        labels.push_back(temp);
+    catch(std::runtime_error err) {
+        cout << err.what() << endl;
+        return -2;
     }
-
-    LogisticClassification myNet(image_size, 10);
-
-    int test_num = 1000;
-    int train_num = image_num - test_num;
-
-    int num_batch = 200;
-    int num_batch_data = train_num / num_batch;
-    int num_epoch = 1;
-    float learning_rate = 0.3f;
-
-    vector<vector<float>> train_data = vector_split(data, 0, train_num);
-    vector<vector<bool>> train_label;
-    for(int i = 0; i < 10; i++)
-        train_label.push_back(vector_split(labels[i], 0, train_num));
-
-    vector<vector<float>> test_data = vector_split(data, train_num, train_num + test_num);
-    vector<vector<bool>> test_label;
-    for(int i = 0; i < 10; i++)
-        test_label.push_back(vector_split(labels[i], train_num, train_num + test_num));
-
-    for(int i = 0; i < num_epoch; i++) {
-        for(int j = 0; j < num_batch; j++) {
-            if(j % 100 == 0) learning_rate /= 3;
-
-            vector<vector<float>> miniBatch_data = vector_split(train_data, j * num_batch_data, (j+1) * num_batch_data);
-            vector<vector<bool>> miniBatch_label;
-            for(int i = 0; i < 10; i++)
-                miniBatch_label.push_back(vector_split(train_label[i], j * num_batch_data, (j+1) * num_batch_data));
-            
-            float loss = myNet.gradientDescent(learning_rate, miniBatch_data, miniBatch_label);
-            cout << i << " epoch " << j << " batch end, loss: " << loss << endl;
-        }
-    }
-
-    cout << "Train End" << endl;
 
     int success_num = 0;
-    for(int i = 0; i < test_num; i++) {
-        if(test_label.at(myNet.logisticClassify(test_data[i]))[i] == 1) success_num++;
-        if(i % 100 == 99) cout << success_num << endl; 
+    for(int i = 0; i < mnist_images.size(); i++)
+    {
+        if(mnist_labels.at(myNet.logisticClassify(mnist_images[i]))[i] == 1) success_num++;
     }
 
-    cout << "Success Rate: " << (float) success_num / test_num * 100 << "%" << endl;
-
-    cout << "Saving Model Data.." << endl;
-    saveModelData(myNet.getModelData(), "./Mnist.net");
-    cout << "Saving Complete!" << endl;
+    cout << "Success Rate: " << (float) success_num / mnist_images.size() * 100 << "%" << endl;
 }

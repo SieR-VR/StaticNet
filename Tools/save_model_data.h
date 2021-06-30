@@ -8,6 +8,6 @@
 #include <string>
 
 void saveModelData(std::vector<uint8_t> modelData, std::string filePath);
-std::vector<uint8_t> loadModelData(std::string filePath);
+std::vector<uint8_t> loadModelDataFromFile(std::string filePath);
 
 #endif
