@@ -117,7 +117,7 @@ void LogisticRegression::loadModelData(std::vector<uint8_t> modelData)
 
     for(int i = 0; i < modelSize; i++) 
     {
-        int temp = (modelData[9 + 4*i] << 24 | modelData[8 + 4*i] | modelData[7 + 4*i] | modelData[6 + 4*i]);
+        int temp = (modelData[9 + 4*i] << 24 | modelData[8 + 4*i] << 16 | modelData[7 + 4*i] << 8 | modelData[6 + 4*i]);
         float weight = ((float *)&temp)[0];
 
         W.push_back(weight);
