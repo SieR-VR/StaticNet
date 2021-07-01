@@ -92,7 +92,7 @@ std::vector<std::vector<float>> get_mnist_image_float(std::string full_path)
     {
         std::vector<float> temp;
         for (int j = 0; j < image_size; j++)
-            temp.push_back(((int)raw_images[i][j]) * 0.78125f);
+            temp.push_back(((int)raw_images[i][j]) * 0.0078125f);
         mnist_images.push_back(temp);
     }
 
