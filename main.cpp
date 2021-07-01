@@ -12,34 +12,25 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-    vector<vector<float>> mnist_images;
-    vector<vector<bool>> mnist_labels;
+    float x = 1, y = 0;
+    vector<vector<float>> data = { {x, x, x * x, x * x, x * x}, {x, y, x * x, x * y, y * y}, {y, x, y * y, y * x, x * x}, {y, y, y * y, y * y, y * y} };
+    vector<bool> labels = { 0, 1, 1, 0 };
 
-    try {
-        mnist_images = get_mnist_image_float(argv[1]);
-        mnist_labels = get_mnist_label(argv[2]);
-    }
-    catch(std::runtime_error err) {
-        cout << err.what() << endl;
-        return -1;
-    };
 
-    LogisticClassification myNet(0, 0);
+    LogisticRegression myNet(5);
 
-    try {
-        auto model_data = loadModelDataFromFile("./Models/Mnist.net");
-        myNet.loadModelData(model_data);
-    }
-    catch(std::runtime_error err) {
-        cout << err.what() << endl;
-        return -2;
+    for(int i = 0; i < 100000; i++) {
+        myNet.gradientDescent(0.1f, data, labels);
     }
 
-    int success_num = 0;
-    for(int i = 0; i < mnist_images.size(); i++)
+    for(int i = 0; i < data.size(); i++)
     {
-        if(mnist_labels.at(myNet.logisticClassify(mnist_images[i]))[i] == 1) success_num++;
+        cout << myNet.logisticReg(data[i]) << endl; 
     }
 
-    cout << "Success Rate: " << (float) success_num / mnist_images.size() * 100 << "%" << endl;
+    for(auto k : myNet.W) {
+        cout << k << " ";
+    }
+    cout << myNet.b << endl;
+    saveModelData(myNet.getModelData(), "./Models/XOR.net");
 }
