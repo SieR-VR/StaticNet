@@ -16,6 +16,11 @@ struct Vector3DSize_t
     {
         return !(*this == other);
     }
+
+    bool checkIsValid() const
+    {
+        return x > 0 && y > 0 && z > 0;
+    }
 };
 
 enum class Vector3DAxis_t
@@ -25,56 +30,57 @@ enum class Vector3DAxis_t
     Z = 2
 };
 
-template <typename T>
 class Vector3D {
 public:
-    Vector3D(const std::vector<std::vector<std::vector<T>>> &m_value);
-    Vector3D(const Vector1D<Vector1D<Vector1D<T>>> &m_value);
-    Vector3D(const Vector3D<T> &m_value);
+    Vector3D(const std::vector<std::vector<std::vector<float>>> &m_value);
+    Vector3D(const Vector3D &m_value);
+    Vector3D();
+    ~Vector3D();
 
-    T at(const Vector3DSize_t& m_index) const;
+    float &at(const Vector3DSize_t& m_index) const;
+    Vector2D operator[](const size_t& m_index) const;
 
-    Vector3D<T> &operator= (const Vector3D<T> &m_value);
+    Vector3D &operator=(const Vector3D &m_value);
 
-    Vector3D<T> &operator+=(const Vector3D<T> &m_value);
-    Vector3D<T> &operator-=(const Vector3D<T> &m_value);
-    Vector3D<T> &operator+=(const T &m_value);
-    Vector3D<T> &operator-=(const T &m_value);
-    Vector3D<T> &operator*=(const Vector3D<T> &m_value);
-    Vector3D<T> &operator/=(const Vector3D<T> &m_value);
-    Vector3D<T> &operator*=(const T &m_value);
-    Vector3D<T> &operator/=(const T &m_value);
+    Vector3D &operator+=(const Vector3D &m_value);
+    Vector3D &operator-=(const Vector3D &m_value);
+    Vector3D &operator+=(const float &m_value);
+    Vector3D &operator-=(const float &m_value);
+    Vector3D &operator*=(const Vector3D &m_value);
+    Vector3D &operator/=(const Vector3D &m_value);
+    Vector3D &operator*=(const float &m_value);
+    Vector3D &operator/=(const float &m_value);
 
-    Vector3D<T> operator+(const Vector3D<T> &m_value) const;
-    Vector3D<T> operator-(const Vector3D<T> &m_value) const;
-    Vector3D<T> operator+(const T &m_value) const;
-    Vector3D<T> operator-(const T &m_value) const;
-    Vector3D<T> operator*(const Vector3D<T> &m_value) const;
-    Vector3D<T> operator/(const Vector3D<T> &m_value) const;
-    Vector3D<T> operator*(const T &m_value) const;
-    Vector3D<T> operator/(const T &m_value) const;
+    Vector3D operator+(const Vector3D &m_value) const;
+    Vector3D operator-(const Vector3D &m_value) const;
+    Vector3D operator+(const float &m_value) const;
+    Vector3D operator-(const float &m_value) const;
+    Vector3D operator*(const Vector3D &m_value) const;
+    Vector3D operator/(const Vector3D &m_value) const;
+    Vector3D operator*(const float &m_value) const;
+    Vector3D operator/(const float &m_value) const;
 
-    bool operator==(const Vector3D<T> &m_value) const;
-    bool operator!=(const Vector3D<T> &m_value) const;
+    bool operator==(const Vector3D &m_value) const;
+    bool operator!=(const Vector3D &m_value) const;
 
-    Vector2D<T> pop(const Vector3DAxis_t &m_axis);
-    void push(const Vector2D<T> &m_value, const Vector3DAxis_t &m_axis);
-    void push(const Vector3D<T> &m_value, const Vector3DAxis_t &m_axis);
+    Vector2D pop(const Vector3DAxis_t &m_axis, const size_t &m_index);
+    void push(const Vector2D &m_value, const Vector3DAxis_t &m_axis);
+    void push(const Vector3D &m_value, const Vector3DAxis_t &m_axis);
     void clear();
     void resize(const Vector3DSize_t &m_size);
-    void resize(const Vector3DSize_t &m_size, const T &m_value);
+    void resize(const Vector3DSize_t &m_size, const float &m_value);
 
-    Vector3D<T> slice(const Vector3DAxis_t &begin = { 0, 0, 0 }, const Vector3DAxis_t &end = shape());
-    Vector3D<T> map(const std::function<T(T)> &m_function) const;
+    Vector3D slice(const Vector3DSize_t &begin = { 0, 0, 0 }, const Vector3DSize_t &end = shape()) const;
+    Vector3D map(const std::function<float(float)> &m_function) const;
 
     bool checkIsValid() const;
-    Vector2D<T> toVector2D() const;
-    Vector2D<T> getVector2DByAxis(const Vector3DAxis_t &m_axis, const size_t &m_index) const;
+    Vector2D toVector2D() const;
+    Vector2D getVector2DByAxis(const Vector3DAxis_t &m_axis, const size_t &m_index) const;
 
-    Vector3DSize_t shape() const;
+    static Vector3DSize_t shape();
     
 private:
-    Vector1D<Vector1D<Vector1D<T>>> value;
+    static std::vector<Vector2D> value;
 };
 
 #endif

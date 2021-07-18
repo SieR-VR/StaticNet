@@ -1,373 +1,404 @@
 #include "Vector2D.h"
 
-template <typename T>
-Vector2D<T>::Vector2D(const std::vector<std::vector<T>> &m_value)
+Vector2D::Vector2D(const std::vector<std::vector<float>> &m_value)
 {
-    for (const auto &row : m_value)
-    {
-        value.push(row);
-    }
+    for (size_t i = 0; i < m_value.size(); i++)
+        value.push_back(m_value[i]);
 }
 
-template <typename T>
-Vector2D<T>::Vector2D(const Vector1D<Vector1D<T>> &m_value)
+Vector2D::Vector2D(const std::vector<Vector1D> &m_value)
 {
     value = m_value;
 }
 
-template <typename T>
-Vector2D<T>::Vector2D(const Vector2D<T> &m_value)
+Vector2D::Vector2D(const Vector2D &m_value)
 {
     value = m_value.value;
 }
 
-template <typename T>
-Vector2D<T>::~Vector2D() {}
-
-template <typename T>
-T Vector2D<T>::at(const Vector2DSize_t &index) const
+Vector2D::Vector2D()
 {
-    return value[index.y][index.x];
+    value.clear();
 }
 
-template <typename T>
-Vector1D<T> Vector2D<T>::operator[](const size_t &index) const
+Vector2D::~Vector2D() {}
+
+float &Vector2D::at(const Vector2DSize_t &index) const
 {
-    return Vector1D<T>(value[index]);
+    return value[index.y].at(index.x);
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator=(const Vector2D<T> &m_value)
+Vector1D Vector2D::operator[](const size_t &index) const
+{
+    return Vector1D(value[index]);
+}
+
+Vector2D &Vector2D::operator=(const Vector2D &m_value)
 {
     value = m_value.value;
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator+=(const Vector2D<T> &m_value)
+Vector2D &Vector2D::operator+=(const Vector2D &m_value)
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator+=: shape mismatch");
         return *this;
     }
 
-    value += m_value.value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] += m_value[i];
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator-=(const Vector2D<T> &m_value)
+Vector2D &Vector2D::operator-=(const Vector2D &m_value)
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator-=: shape mismatch");
         return *this;
     }
 
-    value -= m_value.value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] -= m_value[i];
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator+=(const T &m_value)
+Vector2D &Vector2D::operator+=(const float &m_value)
 {
-    value += m_value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] += m_value;
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator-=(const T &m_value)
+Vector2D &Vector2D::operator-=(const float &m_value)
 {
-    value -= m_value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] -= m_value;
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator*=(const Vector2D<T> &m_value)
+Vector2D &Vector2D::operator*=(const Vector2D &m_value)
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator*=: shape mismatch");
         return *this;
     }
 
-    value *= m_value.value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] *= m_value[i];
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator/=(const Vector2D<T> &m_value)
+Vector2D &Vector2D::operator/=(const Vector2D &m_value)
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator/=: shape mismatch");
         return *this;
     }
 
-    value /= m_value.value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] /= m_value[i];
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator*=(const T &m_value)
+Vector2D &Vector2D::operator*=(const float &m_value)
 {
-    value *= m_value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] *= m_value;
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> &Vector2D<T>::operator/=(const T &m_value)
+Vector2D &Vector2D::operator/=(const float &m_value)
 {
-    value /= m_value;
+    for (size_t i = 0; i < value.size(); i++)
+        value[i] /= m_value;
+
     return *this;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator+(const Vector2D<T> &m_value) const
+Vector2D Vector2D::operator+(const Vector2D &m_value) const
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator+=: shape mismatch");
         return value;
     }
 
-    return Vector2D<T>(value + m_value.value);
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] + m_value[i];
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator-(const Vector2D<T> &m_value) const
+Vector2D Vector2D::operator-(const Vector2D &m_value) const
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator-=: shape mismatch");
         return value;
     }
 
-    return Vector2D<T>(value - m_value.value);
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] - m_value[i];
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator+(const T &m_value) const
+Vector2D Vector2D::operator+(const float &m_value) const
 {
-    return Vector2D<T>(*this) += m_value;
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] + m_value;
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator-(const T &m_value) const
+Vector2D Vector2D::operator-(const float &m_value) const
 {
-    return Vector2D<T>(*this) -= m_value;
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] - m_value;
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator*(const Vector2D<T> &m_value) const
+Vector2D Vector2D::operator*(const Vector2D &m_value) const
 {
-    if(shape() != m_value.shape()) {
+    if (shape() != m_value.shape())
+    {
         throw std::invalid_argument("Vector2D::operator*=: shape mismatch");
         return value;
     }
-    
-    return Vector2D<T>(*this) *= m_value;
+
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] * m_value[i];
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator/(const Vector2D<T> &m_value) const
+Vector2D Vector2D::operator/(const Vector2D &m_value) const
 {
-    return Vector2D<T>(*this) /= m_value;
+    if (shape() != m_value.shape())
+    {
+        throw std::invalid_argument("Vector2D::operator/=: shape mismatch");
+        return value;
+    }
+
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] / m_value[i];
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator*(const T &m_value) const
+Vector2D Vector2D::operator*(const float &m_value) const
 {
-    return Vector2D<T>(*this) *= m_value;
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] * m_value;
+
+    return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::operator/(const T &m_value) const
+Vector2D Vector2D::operator/(const float &m_value) const
 {
-    return Vector2D<T>(*this) /= m_value;
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result[i] = value[i] / m_value;
+
+    return result;
 }
 
-template <typename T>
-bool Vector2D<T>::operator==(const Vector2D<T> &m_value) const
+bool Vector2D::operator==(const Vector2D &m_value) const
 {
-    return value == m_value.value;
+    if (shape() != m_value.shape())
+        return false;
+
+    for (size_t i = 0; i < value.size(); i++)
+        if (value[i] != m_value[i])
+            return false;
+
+    return true;
 }
 
-template <typename T>
-bool Vector2D<T>::operator!=(const Vector2D<T> &m_value) const
+bool Vector2D::operator!=(const Vector2D &m_value) const
 {
-    return value != m_value.value;
+    return !(*this == m_value);
 }
 
-template <typename T>
-Vector1D<T> Vector2D<T>::pop(const Vector2DAxis_t &axis, const size_t &index) 
+Vector1D Vector2D::pop(const Vector2DAxis_t &axis, const size_t &index)
 {
     switch (axis)
     {
         case Vector2DAxis_t::X:
         {
-            Vector1D<T> result;
-            for(const auto &v : value)
-                result.push_back(v.pop(index));
+            Vector1D result;
+            for (size_t i = 0; i < shape().y; i++)
+                result.push(value[i].pop(index));
 
             return result;
         }
         case Vector2DAxis_t::Y:
         {
-            return value.pop(index);
+            Vector1D result = value.at(index);
+            value.erase(value.begin() + index);
+
+            return result;
         }
     }
 }
 
-template <typename T>
-void Vector2D<T>::push(const Vector1D<T> &m_value, const Vector2DAxis_t &m_axis)
+void Vector2D::push(const Vector1D &m_value, const Vector2DAxis_t &m_axis)
 {
     switch (m_axis)
     {
         case Vector2DAxis_t::X:
         {
-            if(shape().y != m_value.size()) {
+            if (shape().y != m_value.shape().x)
+            {
                 throw std::invalid_argument("Vector2D::push: vector y size mismatch");
                 return;
             }
 
-            for (int i = 0; i < m_value.size(); i++)
-                value[i].push(m_value[i]);
-            
+            for (size_t i = 0; i < m_value.shape().x; i++)
+                value[i].push(m_value.at(i));
+
             break;
         }
         case Vector2DAxis_t::Y:
         {
-            if(shape().x != m_value.size()) {
+            if (shape().x != m_value.shape().x)
+            {
                 throw std::invalid_argument("Vector2D::push: vector x size mismatch");
                 return;
             }
 
-            value.push(m_value);
+            value.push_back(m_value);
             break;
         }
     }
 }
 
-template <typename T>
-void Vector2D<T>::push(const Vector2D<T> &m_value, const Vector2DAxis_t &m_axis)
+void Vector2D::push(const Vector2D &m_value, const Vector2DAxis_t &m_axis)
 {
     switch (m_axis)
     {
-        case Vector2DAxis_t::X:
+    case Vector2DAxis_t::X:
+    {
+        if (shape().y != m_value.shape().y)
         {
-            if(shape().y != m_value.shape().y) {
-                throw std::invalid_argument("Vector2D::push: vector y size mismatch");
-                return;
-            }
-
-            for (int i = 0; i < m_value.shape().y; i++)
-                value[i].push(m_value[i]);
-
-            break;
+            throw std::invalid_argument("Vector2D::push: vector y size mismatch");
+            return;
         }
-        case Vector2DAxis_t::Y:
+
+        for (size_t i = 0; i < m_value.shape().y; i++)
+            value[i].push(m_value[i]);
+
+        break;
+    }
+    case Vector2DAxis_t::Y:
+    {
+        if (shape().x != m_value.shape().x)
         {
-            if(shape().x != m_value.shape().x) {
-                throw std::invalid_argument("Vector2D::push: vector x size mismatch");
-                return;
-            }
-
-            value.push(m_value.value);
-
-            break;
+            throw std::invalid_argument("Vector2D::push: vector x size mismatch");
+            return;
         }
+
+        for (size_t i = 0; i < m_value.shape().x; i++)
+            value.push_back(m_value[i]);
+
+        break;
+    }
     }
 }
 
-template <typename T>
-void Vector2D<T>::clear() 
+void Vector2D::clear()
 {
     value.clear();
 }
 
-template <typename T>
-void Vector2D<T>::resize(const Vector2DSize_t &m_size) 
+void Vector2D::resize(const Vector2DSize_t &m_size)
 {
     value.resize(m_size.y);
-    for (auto &row : value)
-    {
-        row.resize(m_size.x);
-    }
+    for (size_t i = 0; i < m_size.y; i++)
+        value[i].resize({m_size.x});
 }
 
-template <typename T>
-void Vector2D<T>::resize(const Vector2DSize_t &m_size, const T &m_value)
+void Vector2D::resize(const Vector2DSize_t &m_size, const float &m_value)
 {
     value.resize(m_size.y);
-    for (auto &row : value)
-    {
-        row.resize(m_size.x, m_value);
-    }
+    for (size_t i = 0; i < m_size.y; i++)
+        value[i].resize({m_size.x}, m_value);
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::slice(const Vector2DSize_t& begin, const Vector2DSize_t& end) const
+Vector2D Vector2D::slice(const Vector2DSize_t &begin, const Vector2DSize_t &end) const
 {
-    Vector2D<T> result;
-    result.resize(end.x - begin.x, end.y - begin.y);
-    for (int i = 0; i < result.shape().y; i++)
+    Vector2D result;
+    result.resize({end.x - begin.x, end.y - begin.y});
+    for (size_t i = 0; i < result.shape().y; i++)
     {
-        for (int j = 0; j < result.shape().x; j++)
+        for (size_t j = 0; j < result.shape().x; j++)
         {
-            result.value[i][j] = value[i + begin.y][j + begin.x];
+            result.at({i, j}) = value[i + begin.y].at(j + begin.x);
         }
     }
     return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::map(const std::function<T(T)>& m_function) const
+Vector2D Vector2D::map(const std::function<float(float)> &m_function) const
 {
-    Vector2D<T> result;
-    for(const auto &row : value)
-        result.push(row.map(m_function));
+    Vector2D result;
+    for (size_t i = 0; i < value.size(); i++)
+        result.push(value[i].map(m_function));
 
     return result;
 }
 
-template <typename T>
-bool Vector2D<T>::checkIsValid() const
+bool Vector2D::checkIsValid() const
 {
-    int i = value[0].size();
-    for (const auto &row : value)
-    {
-        if (row.size() != i)
-        {
+    Vector1DSize_t size = value[0].shape();
+    for (size_t i = 1; i < shape().y; i++)
+        if (value[i].shape() != size)
             return false;
-        }
-    }
+
     return true;
 }
 
-template <typename T>
-Vector1D<T> Vector2D<T>::toVector1D() const
+Vector1D Vector2D::toVector1D() const
 {
-    Vector1D<T> result;
-    for (const auto &row : value)
-    {
-        result.push(row);
-    }
+    Vector1D result;
+    for (size_t i = 0; i < shape().y; i++)
+        result.push(value[i]);
+
     return result;
 }
 
-template <typename T>
-Vector2D<T> Vector2D<T>::transpose() const
+Vector2D Vector2D::transpose() const
 {
-    Vector2D<T> result;
-    result.resize(shape().x, shape().y));
-    for (int i = 0; i < shape().y; i++)
-    {
-        for (int j = 0; j < shape().x; j++)
-        {
-            result.value[j][i] = value[i][j];
-        }
-    }
+    Vector2D result;
+    result.resize({ shape().x, shape().y });
+    for (size_t i = 0; i < shape().y; i++)
+        for (size_t j = 0; j < shape().x; j++)
+            result.value[j].at(i) = value[i].at(j);
+
     return result;
 }
 
-template <typename T>
-Vector2DSize_t Vector2D<T>::shape() const
+Vector2DSize_t Vector2D::shape()
 {
-    return { value.size(), value[0].size() };
+    return {value[0].shape().x, value.size()};
 }
