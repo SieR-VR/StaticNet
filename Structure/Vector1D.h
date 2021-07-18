@@ -7,6 +7,14 @@
 
 struct Vector1DSize_t {
     size_t x;
+
+    bool operator==(const Vector1DSize_t& other) const {
+        return x == other.x;
+    }
+
+    bool operator!=(const Vector1DSize_t& other) const {
+        return !(*this == other);
+    }
 };
 
 enum Vector1DAxis_t {

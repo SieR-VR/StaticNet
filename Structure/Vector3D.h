@@ -5,7 +5,17 @@
 
 struct Vector3DSize_t
 {
-    int x, y, z;
+    size_t x, y, z;
+
+    bool operator==(const Vector3DSize_t& other) const
+    {
+        return x == other.x && y == other.y && z == other.z;
+    }
+
+    bool operator!=(const Vector3DSize_t& other) const
+    {
+        return !(*this == other);
+    }
 };
 
 enum class Vector3DAxis_t
@@ -20,11 +30,9 @@ class Vector3D {
 public:
     Vector3D(const std::vector<std::vector<std::vector<T>>> &m_value);
     Vector3D(const Vector1D<Vector1D<Vector1D<T>>> &m_value);
-    Vector3D(const Vector1D<Vector2D<T>> &m_value);
-    Vector3D(const Vector2D<Vector1D<T>> &m_value);
     Vector3D(const Vector3D<T> &m_value);
 
-    const Vector2D<T>& operator[] (const int &i) const;
+    T at(const Vector3DSize_t& m_index) const;
 
     Vector3D<T> &operator= (const Vector3D<T> &m_value);
 

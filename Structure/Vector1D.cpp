@@ -35,7 +35,7 @@ template <typename T>
 Vector1D<T> &Vector1D<T>::operator+=(const Vector1D<T> &m_value)
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot add Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator+=: shape mismatch");
         return *this;
     }
 
@@ -49,7 +49,7 @@ template <typename T>
 Vector1D<T> &Vector1D<T>::operator-=(const Vector1D<T> &m_value)
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot subtract Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator-=: shape mismatch");
         return *this;
     }
 
@@ -81,7 +81,7 @@ template <typename T>
 Vector1D<T> &Vector1D<T>::operator*=(const Vector1D<T> &m_value)
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot multiply Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator*=: shape mismatch");
         return *this;
     }
 
@@ -95,7 +95,7 @@ template <typename T>
 Vector1D<T> &Vector1D<T>::operator/=(const Vector1D<T> &m_value)
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot divide Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator/=: shape mismatch");
         return *this;
     }
 
@@ -127,7 +127,7 @@ template <typename T>
 Vector1D<T> Vector1D<T>::operator+(const Vector1D<T> &m_value) const
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot add Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator+=: shape mismatch");
         return Vector1D<T>(value);
     }
 
@@ -142,7 +142,7 @@ template <typename T>
 Vector1D<T> Vector1D<T>::operator-(const Vector1D<T> &m_value) const
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot subtract Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator-=: shape mismatch");
         return Vector1D<T>(value);
     }
 
@@ -179,7 +179,7 @@ template <typename T>
 Vector1D<T> Vector1D<T>::operator*(const Vector1D<T> &m_value) const
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot multiply Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator*=: shape mismatch");
         return Vector1D<T>(value);
     }
 
@@ -194,7 +194,7 @@ template <typename T>
 Vector1D<T> Vector1D<T>::operator/(const Vector1D<T> &m_value) const
 {
     if(this->size() != m_value.size()) {
-        throw std::runtime_error("Vector1D: Cannot divide Vector1D with different size.");
+        throw std::invalid_argument("Vector1D::operator/=: shape mismatch");
         return Vector1D<T>(value);
     }
 
@@ -231,7 +231,7 @@ template <typename T>
 bool Vector1D<T>::operator==(const Vector1D<T> &m_value) const
 {
     if (value.size() != m_value.value.size()) {
-        throw std::runtime_error("Vector1D::operator==: size of vectors are different");
+        throw std::invalid_argument("Vector1D::operator==: shape mismatch");
         return false;
     }
 
@@ -304,6 +304,16 @@ void Vector1D<T>::resize(const Vector1DSize_t &m_size, const T &m_value)
 template <typename T>
 Vector1D<T> Vector1D<T>::slice(const Vector1DSize_t &begin, const Vector1DSize_t &end) const
 {
+    if(begin.x >= value.size() || end.x >= value.size()) {
+        throw std::out_of_range("Vector1D::slice: index out of range");
+        return Vector1D<T>(value);
+    }
+
+    if(begin.x > end.x) {
+        throw std::invalid_argument("Vector1D::slice: begin index is greater than end index");
+        return Vector1D<T>(value);
+    }
+
     Vector1D<T> result;
     for(int i = begin.x; i < end.x; i++) 
     {
@@ -318,7 +328,7 @@ Vector1D<T> Vector1D<T>::map(const std::function<T(T)> &m_function) const
     Vector1D<T> result;
     for (auto k : value)
     {
-        result.value.push_back(m_function(k));
+        result.push(m_function(k));
     }
     return result;
 }

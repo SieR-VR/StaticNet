@@ -4,7 +4,7 @@
 #include "Vector1D.h"
 
 struct Vector2DSize_t {
-    int x, y;
+    size_t x, y;
 
     bool operator==(const Vector2DSize_t& other) const {
         return x == other.x && y == other.y;
@@ -28,6 +28,7 @@ public:
     Vector2D(const Vector2D<T>& m_value);
     ~Vector2D();
 
+    Vector1D<T> operator[](const size_t &index) const;
     T at(const Vector2DSize_t &index) const;
 
     Vector2D<T> &operator=(const Vector2D<T>& m_value);

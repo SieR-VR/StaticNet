@@ -31,6 +31,12 @@ T Vector2D<T>::at(const Vector2DSize_t &index) const
 }
 
 template <typename T>
+Vector1D<T> Vector2D<T>::operator[](const size_t &index) const
+{
+    return Vector1D<T>(value[index]);
+}
+
+template <typename T>
 Vector2D<T> &Vector2D<T>::operator=(const Vector2D<T> &m_value)
 {
     value = m_value.value;
@@ -41,7 +47,7 @@ template <typename T>
 Vector2D<T> &Vector2D<T>::operator+=(const Vector2D<T> &m_value)
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot add vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator+=: shape mismatch");
         return *this;
     }
 
@@ -53,7 +59,7 @@ template <typename T>
 Vector2D<T> &Vector2D<T>::operator-=(const Vector2D<T> &m_value)
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot subtract vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator-=: shape mismatch");
         return *this;
     }
 
@@ -79,7 +85,7 @@ template <typename T>
 Vector2D<T> &Vector2D<T>::operator*=(const Vector2D<T> &m_value)
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot multiply vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator*=: shape mismatch");
         return *this;
     }
 
@@ -91,7 +97,7 @@ template <typename T>
 Vector2D<T> &Vector2D<T>::operator/=(const Vector2D<T> &m_value)
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot divide vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator/=: shape mismatch");
         return *this;
     }
 
@@ -117,7 +123,7 @@ template <typename T>
 Vector2D<T> Vector2D<T>::operator+(const Vector2D<T> &m_value) const
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot add vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator+=: shape mismatch");
         return value;
     }
 
@@ -128,7 +134,7 @@ template <typename T>
 Vector2D<T> Vector2D<T>::operator-(const Vector2D<T> &m_value) const
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot subtract vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator-=: shape mismatch");
         return value;
     }
 
@@ -151,7 +157,7 @@ template <typename T>
 Vector2D<T> Vector2D<T>::operator*(const Vector2D<T> &m_value) const
 {
     if(shape() != m_value.shape()) {
-        throw std::invalid_argument("Vector2D: Cannot multiply vectors with different shapes");
+        throw std::invalid_argument("Vector2D::operator*=: shape mismatch");
         return value;
     }
     
