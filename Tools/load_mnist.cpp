@@ -82,7 +82,7 @@ std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_
     }
 }
 
-std::vector<std::vector<float>> get_mnist_image_float(std::string full_path)
+Vector2D get_mnist_image_float(std::string full_path)
 {
     int image_num, image_size;
     auto raw_images = read_mnist_images(full_path, image_num, image_size);
@@ -99,31 +99,14 @@ std::vector<std::vector<float>> get_mnist_image_float(std::string full_path)
     return mnist_images;
 }
 
-std::vector<std::vector<fixed8bit>> get_mnist_image_fixed(std::string full_path)
-{
-    int image_num, image_size;
-    auto raw_images = read_mnist_images(full_path, image_num, image_size);
-
-    std::vector<std::vector<fixed8bit>> mnist_images;
-    for (int i = 0; i < image_num; i++)
-    {
-        std::vector<fixed8bit> temp;
-        for (int j = 0; j < image_size; j++)
-            temp.push_back(fixed8bit(raw_images[i][j]));
-        mnist_images.push_back(temp);
-    }
-
-    return mnist_images;
-}
-
-std::vector<std::vector<bool>> get_mnist_label(std::string full_path)
+Vector2D get_mnist_label(std::string full_path)
 {
     int label_num;
     auto raw_labels = read_mnist_labels(full_path, label_num);
 
-    std::vector<std::vector<bool>> mnist_labels;
+    std::vector<std::vector<float>> mnist_labels;
     for(int i = 0; i < 10; i++) {
-        std::vector<bool> temp;
+        std::vector<float> temp;
         for(int j = 0; j < label_num; j++) temp.push_back(raw_labels[j] == i);
         mnist_labels.push_back(temp);
     }

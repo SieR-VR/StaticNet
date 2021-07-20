@@ -1,12 +1,11 @@
 #ifndef LOGISTICCLASSIFICATION_H
 #define LOGISTICCLASSIFICATION_H
 
-#include <vector>
+#include "../Structure/Vector2D.h"
 #include <stdint.h>
 #include <math.h>
 
 #include "LogisticRegression.h"
-#include "../Tools/vector_helper.h"
 
 class LogisticClassification
 {
@@ -24,10 +23,10 @@ public:
         loadModelData(modelData);
     }
 
-    int logisticClassify(std::vector<float> input);
-    std::vector<float> softmax(std::vector<float> input);
-    float getCost(std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
-    float gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results);
+    int logisticClassify(Vector1D input);
+    Vector1D softmax(Vector1D input);
+    float getCost(Vector2D inputs, Vector2D results);
+    float gradientDescent(float alpha, Vector2D inputs, Vector2D results);
     std::vector<uint8_t> getModelData();
     void loadModelData(std::vector<uint8_t> modelData);
 };

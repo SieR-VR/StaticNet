@@ -3,10 +3,7 @@
 #include <random>
 #include <time.h>
 
-#include "Float/LogisticClassification.h"
-#include "Tools/load_mnist.h"
-#include "Tools/vector_helper.h"
-#include "Tools/save_model_data.h"
+#include "Structure/Vector2D.h"
 
 using namespace std;
 
@@ -16,21 +13,9 @@ int main(int argc, char* argv[])
     vector<vector<float>> data = { {x, x, x * x, x * x, x * x}, {x, y, x * x, x * y, y * y}, {y, x, y * y, y * x, x * x}, {y, y, y * y, y * y, y * y} };
     vector<bool> labels = { 0, 1, 1, 0 };
 
+    Vector2D<float> vecData(data);
+    Vector1D<bool> vecLabels(labels);
 
-    LogisticRegression myNet(5);
+    cout << "Data: " << vecData.at({0, 0}) << endl;
 
-    for(int i = 0; i < 100000; i++) {
-        myNet.gradientDescent(0.1f, data, labels);
-    }
-
-    for(int i = 0; i < data.size(); i++)
-    {
-        cout << myNet.logisticReg(data[i]) << endl; 
-    }
-
-    for(auto k : myNet.W) {
-        cout << k << " ";
-    }
-    cout << myNet.b << endl;
-    saveModelData(myNet.getModelData(), "./Models/XOR.net");
 }

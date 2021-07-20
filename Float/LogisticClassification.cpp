@@ -1,22 +1,21 @@
 #include "LogisticClassification.h"
 #include "../Tools/model_data_defines.h"
 
-int LogisticClassification::logisticClassify(std::vector<float> input)
+int LogisticClassification::logisticClassify(Vector1D input)
 {
-    std::vector<float> logisticRegs(nodes.size());
+    Vector1D hypothesyses;
+    hypothesyses.resize({ nodes.size() });
 
     for (int i = 0; i < nodes.size(); i++)
-    {
-        logisticRegs[i] = nodes[i].logisticReg(input);
-    }
+        hypothesyses.at(i) = nodes[i].hypothesys(input);
 
     float res_float = -100;
     int index = 0;
     for (int i = 0; i < nodes.size(); i++)
     {
-        if (res_float < logisticRegs[i])
+        if (res_float < hypothesyses[i])
         {
-            res_float = logisticRegs[i];
+            res_float = hypothesyses[i];
             index = i;
         }
     }
@@ -24,20 +23,21 @@ int LogisticClassification::logisticClassify(std::vector<float> input)
     return index;
 }
 
-std::vector<float> LogisticClassification::softmax(std::vector<float> input)
+Vector1D LogisticClassification::softmax(Vector1D input)
 {
     float sumExp = 0;
-    for (int i = 0; i < input.size(); i++)
+    for (int i = 0; i < input.shape().x; i++)
         sumExp += exp(input[i]);
 
-    std::vector<float> res(input.size());
-    for (int i = 0; i < input.size(); i++)
-        res[i] = exp(input[i]) / sumExp;
+    Vector1D res;
+    res.resize({ input.shape().x });
+    for (int i = 0; i < input.shape().x; i++)
+        res.at(i) = exp(input[i]) / sumExp;
 
     return res;
 }
 
-float LogisticClassification::getCost(std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results)
+float LogisticClassification::getCost(Vector2D inputs, Vector2D results)
 {
     float res = 0;
     for (int i = 0; i < nodes.size(); i++)
@@ -46,14 +46,12 @@ float LogisticClassification::getCost(std::vector<std::vector<float>> inputs, st
     return res;
 }
 
-float LogisticClassification::gradientDescent(float alpha, std::vector<std::vector<float>> inputs, std::vector<std::vector<bool>> results)
+float LogisticClassification::gradientDescent(float alpha, Vector2D inputs, Vector2D results)
 {
     float costSum = 0;
 
     for (int i = 0; i < nodes.size(); i++)
-    {
         costSum += nodes[i].gradientDescent(alpha, inputs, results[i]);
-    }
 
     return costSum;
 }
