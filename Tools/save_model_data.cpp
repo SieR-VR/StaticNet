@@ -1,12 +1,12 @@
 #include "save_model_data.h"
 
-void saveModelData(std::vector<uint8_t> modelData, std::string filePath) {
+void saveModelData(Vector1D<uint8_t> modelData, std::string filePath) {
     std::ofstream file(filePath, std::ios::binary);
-    file.write((char *)modelData.data(), modelData.size());
+    file.write((char *)modelData.value.data(), modelData.shape().x);
     file.close();
 }
 
-std::vector<uint8_t> loadModelDataFromFile(std::string filePath) {
+Vector1D<uint8_t> loadModelDataFromFile(std::string filePath) {
     std::ifstream file(filePath, std::ios::binary);
 
     if(!file.is_open())

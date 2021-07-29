@@ -7,7 +7,9 @@
 #include <stdexcept>
 #include <string>
 
-void saveModelData(std::vector<uint8_t> modelData, std::string filePath);
-std::vector<uint8_t> loadModelDataFromFile(std::string filePath);
+#include "../Structure/Vector1D.h"
+
+void saveModelData(Vector1D<uint8_t> modelData, std::string filePath);
+Vector1D<uint8_t> loadModelDataFromFile(std::string filePath);
 
 #endif

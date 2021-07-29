@@ -9,8 +9,8 @@
 class LogisticRegression
 {
 public:
-    Vector1D weights;
-    Vector1D preCalculatedHypothesys;
+    Vector1D<float> weights;
+    Vector1D<float> preCalculatedHypothesys;
     float bias;
 
     LogisticRegression(unsigned int argumentsNum)
@@ -19,19 +19,19 @@ public:
         bias = 0.0f;
     }
 
-    LogisticRegression(std::vector<uint8_t> modelData)
+    LogisticRegression(Vector1D<uint8_t> modelData)
     {
         loadModelData(modelData);
     }
 
-    float getCost(Vector2D inputs, Vector1D results);
-    float getCostDiff(Vector2D inputs, Vector1D results, int index);
-    float getBiasDiff(Vector2D inputs, Vector1D results);
-    float hypothesys(Vector1D input);
+    float getCost(Vector2D<float> inputs, Vector1D<bool> results);
+    float getCostDiff(Vector2D<float> inputs, Vector1D<bool> results, int index);
+    float getBiasDiff(Vector2D<float> inputs, Vector1D<bool> results);
+    float hypothesys(Vector1D<float> input);
     float sigmoid(float input);
-    float gradientDescent(float alpha, Vector2D inputs, Vector1D results);
-    std::vector<uint8_t> getModelData();
-    void loadModelData(std::vector<uint8_t> modelData);
+    float gradientDescent(float alpha, Vector2D<float> inputs, Vector1D<bool> results);
+    Vector1D<uint8_t> getModelData();
+    void loadModelData(Vector1D<uint8_t> modelData);
 };
 
 #endif

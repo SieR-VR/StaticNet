@@ -1,9 +1,9 @@
 #include "LogisticClassification.h"
 #include "../Tools/model_data_defines.h"
 
-int LogisticClassification::logisticClassify(Vector1D input)
+int LogisticClassification::logisticClassify(Vector1D<float> input)
 {
-    Vector1D hypothesyses;
+    Vector1D<float> hypothesyses;
     hypothesyses.resize({ nodes.size() });
 
     for (int i = 0; i < nodes.size(); i++)
@@ -23,21 +23,13 @@ int LogisticClassification::logisticClassify(Vector1D input)
     return index;
 }
 
-Vector1D LogisticClassification::softmax(Vector1D input)
+Vector1D<float> LogisticClassification::softmax(Vector1D<float> input)
 {
-    float sumExp = 0;
-    for (int i = 0; i < input.shape().x; i++)
-        sumExp += exp(input[i]);
-
-    Vector1D res;
-    res.resize({ input.shape().x });
-    for (int i = 0; i < input.shape().x; i++)
-        res.at(i) = exp(input[i]) / sumExp;
-
-    return res;
+    Vector1D<float> inputExponent = input.map([](float i){ return exp(i); });
+    return inputExponent / inputExponent.mean();
 }
 
-float LogisticClassification::getCost(Vector2D inputs, Vector2D results)
+float LogisticClassification::getCost(Vector2D<float> inputs, Vector2D<bool> results)
 {
     float res = 0;
     for (int i = 0; i < nodes.size(); i++)
@@ -46,7 +38,7 @@ float LogisticClassification::getCost(Vector2D inputs, Vector2D results)
     return res;
 }
 
-float LogisticClassification::gradientDescent(float alpha, Vector2D inputs, Vector2D results)
+float LogisticClassification::gradientDescent(float alpha, Vector2D<float> inputs, Vector2D<bool> results)
 {
     float costSum = 0;
 
@@ -56,30 +48,29 @@ float LogisticClassification::gradientDescent(float alpha, Vector2D inputs, Vect
     return costSum;
 }
 
-std::vector<uint8_t> LogisticClassification::getModelData()
+Vector1D<uint8_t> LogisticClassification::getModelData()
 {
-    std::vector<uint8_t> modelData;
+    Vector1D<uint8_t> modelData;
 
-    modelData.push_back(static_cast<uint8_t>(modelNumberType::FLOAT));
-    modelData.push_back(static_cast<uint8_t>(modelType::LOGISTIC_CLASSIFICATON));
+    modelData.push(static_cast<uint8_t>(modelNumberType::FLOAT));
+    modelData.push(static_cast<uint8_t>(modelType::LOGISTIC_CLASSIFICATON));
 
     uint32_t modelSize = nodes.size();
-    modelData.push_back(((uint8_t *)&modelSize)[0]);
-    modelData.push_back(((uint8_t *)&modelSize)[1]);
-    modelData.push_back(((uint8_t *)&modelSize)[2]);
-    modelData.push_back(((uint8_t *)&modelSize)[3]);
+    modelData.push(((uint8_t *)&modelSize)[0]);
+    modelData.push(((uint8_t *)&modelSize)[1]);
+    modelData.push(((uint8_t *)&modelSize)[2]);
+    modelData.push(((uint8_t *)&modelSize)[3]);
 
     for (auto &node : nodes)
     {
         auto nodeData = node.getModelData();
-        for (auto &k : nodeData)
-            modelData.push_back(k);
+        modelData.push(nodeData);
     }
 
     return modelData;
 }
 
-void LogisticClassification::loadModelData(std::vector<uint8_t> modelData)
+void LogisticClassification::loadModelData(Vector1D<uint8_t> modelData)
 {
     if(modelData[0] != static_cast<uint8_t>(modelNumberType::FLOAT))
         throw std::runtime_error("Model number type is invalid!");
@@ -88,15 +79,15 @@ void LogisticClassification::loadModelData(std::vector<uint8_t> modelData)
         throw std::runtime_error("Model type is invalid!");
 
     uint32_t modelSize = (modelData[5] << 24 | modelData[4] << 16 | modelData[3] << 8 | modelData[2]);
-    uint32_t modelDataSize = (modelData.size() - 6) / modelSize;
+    uint32_t modelDataSize = (modelData.shape().x - 6) / modelSize;
 
-    if((modelData.size() - 6) % modelSize != 0)
+    if((modelData.shape().x - 6) % modelSize != 0)
         throw std::runtime_error("Model is invalid!" + std::to_string(modelSize));
         
     nodes.clear();
 
     for(int i = 0; i < modelSize; i++) {
-        LogisticRegression node(vector_split(modelData, 6 + i * modelDataSize, 6 + (i + 1) * modelDataSize));
+        LogisticRegression node(modelData.slice({ 6 + i * modelDataSize}, { 6 + (i + 1) * modelDataSize}));
         nodes.push_back(node);
     }
 }

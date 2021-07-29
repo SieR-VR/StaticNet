@@ -1,7 +1,7 @@
 #include "LogisticRegression.h"
 #include "../Tools/model_data_defines.h"
 
-float LogisticRegression::getCost(Vector2D inputs, Vector1D results)
+float LogisticRegression::getCost(Vector2D<float> inputs, Vector1D<bool> results)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -19,7 +19,7 @@ float LogisticRegression::getCost(Vector2D inputs, Vector1D results)
     return resultCost / inputs.shape().y;
 }
 
-float LogisticRegression::getCostDiff(Vector2D inputs, Vector1D results, int index)
+float LogisticRegression::getCostDiff(Vector2D<float> inputs, Vector1D<bool> results, int index)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -34,7 +34,7 @@ float LogisticRegression::getCostDiff(Vector2D inputs, Vector1D results, int ind
     return resultCostDiff / inputs.shape().y;
 }
 
-float LogisticRegression::getBiasDiff(Vector2D inputs, Vector1D results)
+float LogisticRegression::getBiasDiff(Vector2D<float> inputs, Vector1D<bool> results)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -49,7 +49,7 @@ float LogisticRegression::getBiasDiff(Vector2D inputs, Vector1D results)
     return resultBiasDiff / inputs.shape().y;
 }
 
-float LogisticRegression::hypothesys(Vector1D input)
+float LogisticRegression::hypothesys(Vector1D<float> input)
 {
     if(input.shape() != weights.shape()) {
         throw std::runtime_error("LogisticRegression::hypothesys: inputs and results must have the same number of rows");
@@ -68,9 +68,9 @@ float LogisticRegression::sigmoid(float input) {
     return (1 / (1 + exp(-1 * input)));
 }
 
-float LogisticRegression::gradientDescent(float alpha, Vector2D inputs, Vector1D results)
+float LogisticRegression::gradientDescent(float alpha, Vector2D<float> inputs, Vector1D<bool> results)
 {
-    Vector1D mWeights = weights;
+    Vector1D<float> mWeights = weights;
     float mBias = bias;
 
     preCalculatedHypothesys.clear();
@@ -87,35 +87,35 @@ float LogisticRegression::gradientDescent(float alpha, Vector2D inputs, Vector1D
     return getCost(inputs, results);
 }
 
-std::vector<uint8_t> LogisticRegression::getModelData()
+Vector1D<uint8_t> LogisticRegression::getModelData()
 {
-    std::vector<uint8_t> modelData;
-    modelData.push_back(static_cast<uint8_t>(modelNumberType::FLOAT));
-    modelData.push_back(static_cast<uint8_t>(modelType::LOGISTIC_REGRESSION));
+    Vector1D<uint8_t> modelData;
+    modelData.push(static_cast<uint8_t>(modelNumberType::FLOAT));
+    modelData.push(static_cast<uint8_t>(modelType::LOGISTIC_REGRESSION));
 
     uint32_t modelSize = weights.shape().x + 1;
-    modelData.push_back(((uint8_t*)&modelSize)[0]);
-    modelData.push_back(((uint8_t*)&modelSize)[1]);
-    modelData.push_back(((uint8_t*)&modelSize)[2]);
-    modelData.push_back(((uint8_t*)&modelSize)[3]);
+    modelData.push(((uint8_t*)&modelSize)[0]);
+    modelData.push(((uint8_t*)&modelSize)[1]);
+    modelData.push(((uint8_t*)&modelSize)[2]);
+    modelData.push(((uint8_t*)&modelSize)[3]);
 
     for(size_t i = 0; i < weights.shape().x; i++)
     {
-        modelData.push_back(((uint8_t*)&weights)[0 + i]);
-        modelData.push_back(((uint8_t*)&weights)[1 + i]);
-        modelData.push_back(((uint8_t*)&weights)[2 + i]);
-        modelData.push_back(((uint8_t*)&weights)[3 + i]);
+        modelData.push(((uint8_t*)&weights)[0 + i]);
+        modelData.push(((uint8_t*)&weights)[1 + i]);
+        modelData.push(((uint8_t*)&weights)[2 + i]);
+        modelData.push(((uint8_t*)&weights)[3 + i]);
     }
 
-    modelData.push_back(((uint8_t*)&bias)[0]);
-    modelData.push_back(((uint8_t*)&bias)[1]);
-    modelData.push_back(((uint8_t*)&bias)[2]);
-    modelData.push_back(((uint8_t*)&bias)[3]);
+    modelData.push(((uint8_t*)&bias)[0]);
+    modelData.push(((uint8_t*)&bias)[1]);
+    modelData.push(((uint8_t*)&bias)[2]);
+    modelData.push(((uint8_t*)&bias)[3]);
 
     return modelData;
 }
 
-void LogisticRegression::loadModelData(std::vector<uint8_t> modelData)
+void LogisticRegression::loadModelData(Vector1D<uint8_t> modelData)
 {
     if(modelData[0] != static_cast<uint8_t>(modelNumberType::FLOAT))
         throw std::runtime_error("Model number type is invalid!");

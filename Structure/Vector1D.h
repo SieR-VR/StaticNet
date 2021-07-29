@@ -59,7 +59,7 @@ public:
         return value[i];
     }
 
-    const T &at(const size_t &i) const
+    T &at(const size_t &i) const
     {
         return value[i];
     }
@@ -254,6 +254,15 @@ public:
         return result;
     }
 
+    float mean() const
+    {
+        float sum = 0;
+        for (size_t i = 0; i < value.size(); i++)
+            sum += value[i];
+
+        return sum;
+    }
+
     bool operator==(const Vector1D<T> &m_value) const
     {
         if (shape() != m_value.shape())
@@ -363,7 +372,6 @@ public:
         return {value.size()};
     }
 
-private:
     std::vector<T> value;
 };
 

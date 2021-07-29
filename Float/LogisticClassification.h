@@ -18,17 +18,18 @@ public:
         nodes.assign(nodeNum, temp);
     }
 
-    LogisticClassification(std::vector<uint8_t> modelData)
+    LogisticClassification(Vector1D<uint8_t> modelData)
     {
         loadModelData(modelData);
     }
 
-    int logisticClassify(Vector1D input);
-    Vector1D softmax(Vector1D input);
-    float getCost(Vector2D inputs, Vector2D results);
-    float gradientDescent(float alpha, Vector2D inputs, Vector2D results);
-    std::vector<uint8_t> getModelData();
-    void loadModelData(std::vector<uint8_t> modelData);
+    int logisticClassify(Vector1D<float> input);
+    Vector1D<float> softmax(Vector1D<float> input);
+    float getCost(Vector2D<float> inputs, Vector2D<bool> results);
+    float gradientDescent(float alpha, Vector2D<float> inputs, Vector2D<bool> results);
+    
+    Vector1D<uint8_t> getModelData();
+    void loadModelData(Vector1D<uint8_t> modelData);
 };
 
 #endif

@@ -57,7 +57,7 @@ public:
 
     ~Vector2D() {}
 
-    const T &at(const Vector2DSize_t &index) const
+    T &at(const Vector2DSize_t &index) const
     {
         return value[index.y].at(index.x);
     }
