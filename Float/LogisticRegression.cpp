@@ -1,7 +1,9 @@
 #include "LogisticRegression.h"
-#include "../Tools/model_data_defines.h"
+#include "../Tools/Defines.h"
 
-float LogisticRegression::getCost(Vector2D<float> inputs, Vector1D<bool> results)
+using namespace Defines;
+
+float LogisticRegression::getCost(Vector2D<float> inputs, Vector1D<int> results)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -11,15 +13,12 @@ float LogisticRegression::getCost(Vector2D<float> inputs, Vector1D<bool> results
     float resultCost = 0;
 
     for (int i = 0; i < inputs.shape().y; i++)
-    {
-        float cost = preCalculatedHypothesys[i] - results[i];
-        resultCost += cost * cost;
-    }
+        resultCost += -1 * (results[i] * log(preCalculatedHypothesys[i]) + (1 - results[i]) * log(1 - preCalculatedHypothesys[i]));
 
     return resultCost / inputs.shape().y;
 }
 
-float LogisticRegression::getCostDiff(Vector2D<float> inputs, Vector1D<bool> results, int index)
+float LogisticRegression::getCostDiff(Vector2D<float> inputs, Vector1D<int> results, int index)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -34,7 +33,7 @@ float LogisticRegression::getCostDiff(Vector2D<float> inputs, Vector1D<bool> res
     return resultCostDiff / inputs.shape().y;
 }
 
-float LogisticRegression::getBiasDiff(Vector2D<float> inputs, Vector1D<bool> results)
+float LogisticRegression::getBiasDiff(Vector2D<float> inputs, Vector1D<int> results)
 {
     if (inputs.shape().y != results.shape().x) {
         throw std::runtime_error("LogisticRegression::getCost: inputs and results must have the same number of rows");
@@ -52,7 +51,7 @@ float LogisticRegression::getBiasDiff(Vector2D<float> inputs, Vector1D<bool> res
 float LogisticRegression::hypothesys(Vector1D<float> input)
 {
     if(input.shape() != weights.shape()) {
-        throw std::runtime_error("LogisticRegression::hypothesys: inputs and results must have the same number of rows");
+        throw std::runtime_error("LogisticRegression::hypothesys: inputs and weights must have the same number of rows");
         return 0;
     }
 
@@ -65,10 +64,10 @@ float LogisticRegression::hypothesys(Vector1D<float> input)
 }
 
 float LogisticRegression::sigmoid(float input) {
-    return (1 / (1 + exp(-1 * input)));
+    return (1 / (1 + exp(-input)));
 }
 
-float LogisticRegression::gradientDescent(float alpha, Vector2D<float> inputs, Vector1D<bool> results)
+float LogisticRegression::train(float alpha, Vector2D<float> inputs, Vector1D<int> results)
 {
     Vector1D<float> mWeights = weights;
     float mBias = bias;
@@ -85,6 +84,17 @@ float LogisticRegression::gradientDescent(float alpha, Vector2D<float> inputs, V
     bias = mBias;
 
     return getCost(inputs, results);
+}
+
+void LogisticRegression::gradientDescent(float alpha, Vector1D<float> weightDiff, float biasDiff)
+{
+    weights -= (weightDiff * alpha);
+    bias -= (biasDiff * alpha);
+}
+
+size_t LogisticRegression::getInputNumber()
+{
+    return weights.shape().x;
 }
 
 Vector1D<uint8_t> LogisticRegression::getModelData()

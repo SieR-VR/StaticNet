@@ -46,7 +46,7 @@ public:
 
     Vector1D()
     {
-        value.clear();
+        value = std::vector<T>();
     }
 
     ~Vector1D()
@@ -54,12 +54,12 @@ public:
         value.clear();
     }
 
-    T operator[](const size_t &i)
+    T &operator[](const size_t &i)
     {
         return value[i];
     }
 
-    T &at(const size_t &i) const
+    T &at(const size_t &i)
     {
         return value[i];
     }
@@ -70,7 +70,7 @@ public:
         return *this;
     }
 
-    Vector1D<T> &operator+=(const Vector1D<T> &m_value)
+    Vector1D<T> &operator+=(Vector1D<T> m_value)
     {
         if (shape() != m_value.shape())
         {
@@ -79,12 +79,12 @@ public:
         }
 
         for (size_t i = 0; i < value.size(); i++)
-            value[i] += m_value.at(i);
+            value[i] += m_value[i];
 
         return *this;
     }
 
-    Vector1D<T> &operator-=(const Vector1D<T> &m_value)
+    Vector1D<T> &operator-=(Vector1D<T> m_value)
     {
         if (shape() != m_value.shape())
         {
@@ -93,7 +93,7 @@ public:
         }
 
         for (size_t i = 0; i < value.size(); i++)
-            value[i] -= m_value.at(i);
+            value[i] -= m_value[i];
 
         return *this;
     }
@@ -168,7 +168,7 @@ public:
 
         Vector1D<T> result;
         for (size_t i = 0; i < value.size(); i++)
-            result.push(value[i] + m_value.at(i));
+            result.push(value[i] + m_value[i]);
 
         return result;
     }
@@ -183,7 +183,7 @@ public:
 
         Vector1D<T> result;
         for (size_t i = 0; i < value.size(); i++)
-            result.push(value[i] - m_value.at(i));
+            result.push(value[i] - m_value[i]);
 
         return result;
     }
@@ -206,17 +206,17 @@ public:
         return result;
     }
 
-    Vector1D<T> operator*(const Vector1D<T> &m_value) const
+    Vector1D<T> operator*(Vector1D<T> m_value) const
     {
         if (shape() != m_value.shape())
         {
-            throw std::invalid_argument("Vector1D::operator*=: shape mismatch");
+            throw std::invalid_argument("Vector1D::operator*: shape mismatch");
             return Vector1D<T>(value);
         }
 
         Vector1D<T> result;
         for (size_t i = 0; i < value.size(); i++)
-            result.push(value[i] * m_value.at(i));
+            result.push(value[i] * m_value[i]);
 
         return result;
     }
@@ -225,7 +225,7 @@ public:
     {
         if (shape() != m_value.shape())
         {
-            throw std::invalid_argument("Vector1D::operator/=: shape mismatch");
+            throw std::invalid_argument("Vector1D::operator/: shape mismatch");
             return Vector1D<T>(value);
         }
 
@@ -236,7 +236,7 @@ public:
         return result;
     }
 
-    Vector1D<T> operator*(const T &m_value) const
+    Vector1D<T> operator*(const T &m_value)
     {
         Vector1D<T> result;
         for (size_t i = 0; i < value.size(); i++)
@@ -245,7 +245,7 @@ public:
         return result;
     }
 
-    Vector1D<T> operator/(const T &m_value) const
+    Vector1D<T> operator/(const T &m_value)
     {
         Vector1D<T> result;
         for (size_t i = 0; i < value.size(); i++)
@@ -286,10 +286,9 @@ public:
 
     T pop(const size_t &i)
     {
-        if (i >= shape().x || i < -1)
+        if (i >= shape().x)
         {
             throw std::out_of_range("Vector1D::pop: index out of range");
-            return;
         }
 
         T result;
@@ -304,10 +303,10 @@ public:
         value.push_back(m_value);
     }
 
-    void push(const Vector1D<T> &m_value)
+    void push(Vector1D<T> &m_value)
     {
         for (size_t i = 0; i < m_value.shape().x; i++)
-            value.push_back(m_value.at(i));
+            value.push_back(m_value[i]);
     }
 
     void clear()
@@ -323,6 +322,7 @@ public:
             return;
         }
 
+        value.clear();
         value.resize(m_size.x);
     }
 
@@ -334,6 +334,7 @@ public:
             return;
         }
 
+        value.clear();
         value.resize(m_size.x, m_value);
     }
 
@@ -367,12 +368,27 @@ public:
         return result;
     }
 
-    Vector1DSize_t shape()
+    Vector1DSize_t shape() const
     {
         return {value.size()};
     }
 
     std::vector<T> value;
 };
+
+template <typename T>
+std::ostream &operator<<(std::ostream &m_os, Vector1D<T> m_value)
+{
+    m_os << std::string("[");
+    for (size_t i = 0; i < m_value.shape().x; i++)
+    {
+        if (i == m_value.shape().x - 1)
+            m_os << m_value[i] << std::string("]");
+        else
+            m_os << m_value[i] << std::string(", ");
+    }
+
+    return m_os;
+}
 
 #endif

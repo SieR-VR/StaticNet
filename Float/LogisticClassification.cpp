@@ -1,7 +1,10 @@
 #include "LogisticClassification.h"
-#include "../Tools/model_data_defines.h"
+#include "../Tools/Defines.h"
+#include <iostream>
 
-int LogisticClassification::logisticClassify(Vector1D<float> input)
+using namespace Defines;
+
+Vector1D<float> LogisticClassification::logisticClassify(Vector1D<float> input)
 {
     Vector1D<float> hypothesyses;
     hypothesyses.resize({ nodes.size() });
@@ -9,18 +12,7 @@ int LogisticClassification::logisticClassify(Vector1D<float> input)
     for (int i = 0; i < nodes.size(); i++)
         hypothesyses.at(i) = nodes[i].hypothesys(input);
 
-    float res_float = -100;
-    int index = 0;
-    for (int i = 0; i < nodes.size(); i++)
-    {
-        if (res_float < hypothesyses[i])
-        {
-            res_float = hypothesyses[i];
-            index = i;
-        }
-    }
-
-    return index;
+    return hypothesyses;
 }
 
 Vector1D<float> LogisticClassification::softmax(Vector1D<float> input)
@@ -29,7 +21,7 @@ Vector1D<float> LogisticClassification::softmax(Vector1D<float> input)
     return inputExponent / inputExponent.mean();
 }
 
-float LogisticClassification::getCost(Vector2D<float> inputs, Vector2D<bool> results)
+float LogisticClassification::getCost(Vector2D<float> inputs, Vector2D<int> results)
 {
     float res = 0;
     for (int i = 0; i < nodes.size(); i++)
@@ -38,14 +30,41 @@ float LogisticClassification::getCost(Vector2D<float> inputs, Vector2D<bool> res
     return res;
 }
 
-float LogisticClassification::gradientDescent(float alpha, Vector2D<float> inputs, Vector2D<bool> results)
+float LogisticClassification::train(float alpha, Vector2D<float> inputs, Vector2D<int> results)
 {
     float costSum = 0;
 
     for (int i = 0; i < nodes.size(); i++)
-        costSum += nodes[i].gradientDescent(alpha, inputs, results[i]);
+        costSum += nodes[i].train(alpha, inputs, results[i]);
 
     return costSum;
+}
+
+void LogisticClassification::gradientDescent(float alpha, Vector2D<float> weightDiff, Vector1D<float> biasDiff)
+{
+    for (int i = 0; i < nodes.size(); i++)
+        nodes[i].gradientDescent(alpha, weightDiff[i], biasDiff[i]);
+}
+
+size_t LogisticClassification::getNodeNumber()
+{
+    return nodes.size();
+}
+
+size_t LogisticClassification::getInputNumber()
+{
+    return nodes[0].getInputNumber();
+}
+
+Vector1D<float> LogisticClassification::getWeightsFromNode(size_t nodeIndex)
+{
+    Vector1D<float> weights;
+    weights.resize({ getNodeNumber() });
+
+    for (int i = 0; i < nodes.size(); i++)
+        weights.at(i) = nodes[i].weights[nodeIndex];
+
+    return weights;
 }
 
 Vector1D<uint8_t> LogisticClassification::getModelData()

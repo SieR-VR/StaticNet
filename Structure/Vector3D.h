@@ -409,7 +409,7 @@ public:
 
     Vector2D<T> toVector2D() const
     {
-        Vector2D result;
+        Vector2D<T> result;
         for (size_t z = 0; z < shape().z; z++)
             result.push(value[z]);
 

@@ -12,10 +12,13 @@ class LogisticClassification
 public:
     std::vector<LogisticRegression> nodes;
 
-    LogisticClassification(unsigned int argumentsNum, unsigned int nodeNum)
+    LogisticClassification(size_t inputNum, size_t outputNum)
     {
-        LogisticRegression temp(argumentsNum);
-        nodes.assign(nodeNum, temp);
+        for(size_t i = 0; i < outputNum; i++)
+        {
+            LogisticRegression temp(inputNum);
+            nodes.push_back(temp);
+        }
     }
 
     LogisticClassification(Vector1D<uint8_t> modelData)
@@ -23,10 +26,15 @@ public:
         loadModelData(modelData);
     }
 
-    int logisticClassify(Vector1D<float> input);
+    Vector1D<float> logisticClassify(Vector1D<float> input);
     Vector1D<float> softmax(Vector1D<float> input);
-    float getCost(Vector2D<float> inputs, Vector2D<bool> results);
-    float gradientDescent(float alpha, Vector2D<float> inputs, Vector2D<bool> results);
+    float getCost(Vector2D<float> inputs, Vector2D<int> results);
+    float train(float alpha, Vector2D<float> inputs, Vector2D<int> results);
+    void gradientDescent(float alpha, Vector2D<float> weightDiff, Vector1D<float> biasDiff);
+
+    size_t getNodeNumber();
+    size_t getInputNumber();
+    Vector1D<float> getWeightsFromNode(size_t nodeIndex);
     
     Vector1D<uint8_t> getModelData();
     void loadModelData(Vector1D<uint8_t> modelData);

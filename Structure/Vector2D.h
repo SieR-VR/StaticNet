@@ -2,7 +2,7 @@
 #define VECTOR2D_H
 
 #include "Vector1D.h"
-#define VEC1 Vector1D
+#include <iostream>
 
 struct Vector2DSize_t
 {
@@ -57,14 +57,14 @@ public:
 
     ~Vector2D() {}
 
-    T &at(const Vector2DSize_t &index) const
+    T &at(const Vector2DSize_t &index)
     {
         return value[index.y].at(index.x);
     }
 
-    Vector1D<T> operator[](const size_t &index) const
+    Vector1D<T> &operator[](const size_t &index)
     {
-        return Vector1D<T>(value[index]);
+        return value[index];
     }
 
     Vector2D<T> &operator=(const Vector2D &m_value)
@@ -241,7 +241,9 @@ public:
 
     Vector2D<T> operator*(const T &m_value) const
     {
-        Vector2D result;
+        Vector2D<T> result;
+        result.resize(shape());
+
         for (size_t i = 0; i < value.size(); i++)
             result[i] = value[i] * m_value;
 
@@ -250,7 +252,9 @@ public:
 
     Vector2D<T> operator/(const T &m_value) const
     {
-        Vector2D result;
+        Vector2D<T> result;
+        result.resize(shape());
+
         for (size_t i = 0; i < value.size(); i++)
             result[i] = value[i] / m_value;
 
@@ -293,6 +297,8 @@ public:
 
             return result;
         }
+        default:
+            throw std::invalid_argument("Vector2D::pop: invalid axis");
         }
     }
 
@@ -309,12 +315,12 @@ public:
             }
 
             for (size_t i = 0; i < m_value.shape().x; i++)
-                value[i].push(m_value.at(i));
+                value[i].push(m_value[i]);
 
             break;
         }
         case Vector2DAxis_t::Y:
-        {
+        {           
             if (shape().x != m_value.shape().x)
             {
                 throw std::invalid_argument("Vector2D::push: vector x size mismatch");
@@ -379,15 +385,15 @@ public:
             value[i].resize({m_size.x}, m_value);
     }
 
-    Vector2D<T> slice(const Vector2DSize_t &begin, const Vector2DSize_t &end) const
+    Vector2D<T> slice(const Vector2DSize_t &begin, const Vector2DSize_t &end)
     {
         Vector2D<T> result;
         result.resize({end.x - begin.x, end.y - begin.y});
-        for (size_t i = 0; i < result.shape().y; i++)
+        for (size_t i = 0; i < result.shape().x; i++)
         {
-            for (size_t j = 0; j < result.shape().x; j++)
+            for (size_t j = 0; j < result.shape().y; j++)
             {
-                result.at({i, j}) = value[i + begin.y].at(j + begin.x);
+                result.at({i, j}) = value[j + begin.y][i + begin.x];
             }
         }
         return result;
@@ -432,9 +438,10 @@ public:
         return result;
     }
 
-    Vector2DSize_t shape()
+    Vector2DSize_t shape() const
     {
-        return {value[0].shape().x, value.size()};
+        if(value.size() == 0) return {0, 0};
+        else return {value[0].shape().x, value.size()};
     }
 
 private:
