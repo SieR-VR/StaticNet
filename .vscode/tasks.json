@@ -1,0 +1,32 @@
+{
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "Also Very Cool Build",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-g",
+                "${workspaceFolder}/main.cpp",
+                "-o",
+                "${workspaceFolder}/MyFixNet",
+                "${workspaceFolder}/Tools/load_mnist.cpp",
+                "${workspaceFolder}/Tools/save_model_data.cpp",
+                "${workspaceFolder}/Tools/ProgressBar.cpp",
+                "${workspaceFolder}/Float/Node.cpp",
+                "${workspaceFolder}/Float/Layer.cpp",
+                "${workspaceFolder}/Float/MultiLayer.cpp"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ],
+    "version": "2.0.0"
+}
