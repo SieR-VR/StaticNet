@@ -391,4 +391,5 @@ std::ostream &operator<<(std::ostream &m_os, Vector1D<T> m_value)
     return m_os;
 }
 
+
 #endif

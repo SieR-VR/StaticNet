@@ -62,6 +62,29 @@ public:
         return value[index.y].at(index.x);
     }
 
+    Vector1D<T> at(const size_t &index, const Vector2DAxis_t &axis)
+    {
+        switch (axis)
+        {
+        case Vector2DAxis_t::X:
+        {
+            Vector1D<T> result;
+            for (size_t i = 0; i < shape().y; i++)
+                result.push(value[i].at(index));
+
+            return result;
+        }
+        case Vector2DAxis_t::Y:
+        {
+            Vector1D<T> result = value.at(index);
+
+            return result;
+        }
+        default:
+            throw std::invalid_argument("Vector2D::at: invalid axis");
+        }
+    }
+
     Vector1D<T> &operator[](const size_t &index)
     {
         return value[index];
@@ -302,7 +325,7 @@ public:
         }
     }
 
-    void push(const Vector1D<T> &m_value, const Vector2DAxis_t &m_axis)
+    void push(Vector1D<T> m_value, const Vector2DAxis_t &m_axis)
     {
         switch (m_axis)
         {

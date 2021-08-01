@@ -53,7 +53,7 @@ fixed8bit FixedLinearRegression::sigmoid(std::vector<fixed8bit> input)
     return SIGMOID[linearReg(input).value + 128];
 }
 
-fixed8bit FixedLinearRegression::gradientDescent(fixed8bit alpha, std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results)
+fixed8bit FixedLinearRegression::GradientDescent(fixed8bit alpha, std::vector<std::vector<fixed8bit>> inputs, std::vector<fixed8bit> results)
 {
     std::vector<fixed8bit> mW = W;
     fixed8bit mB = b;

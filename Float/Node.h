@@ -3,18 +3,18 @@
 
 #include "../Structure/Vector2D.h"
 #include <stdint.h>
-#include <math.h>
 #include <time.h>
 #include <stdexcept>
+#include <utility>
 
-class LogisticRegression
+class Node
 {
 public:
     Vector1D<float> weights;
     Vector1D<float> preCalculatedHypothesys;
     float bias;
 
-    LogisticRegression(size_t argumentsNum)
+    Node(size_t argumentsNum, std::function<float(float)> activationFunction, std::function<float(float)> activationFunctionGradient)
     {
         srand((uint32_t)time(NULL));
 
@@ -23,25 +23,26 @@ public:
             weights.at(i) = (float)(rand() % 100) / 100 - 0.5; // -0.5 .. 0.5
 
         bias = (float)(rand() % 100) / 100 - 0.5; // -0.5 .. 0.5
+
+        this->activationFunction = activationFunction;
+        this->activationFunctionGradient = activationFunctionGradient;
     }
 
-    LogisticRegression(Vector1D<uint8_t> modelData)
+    Node(Vector1D<uint8_t> modelData)
     {
         loadModelData(modelData);
     }
 
-    float getCost(Vector2D<float> inputs, Vector1D<int> results);
-    float getCostDiff(Vector2D<float> inputs, Vector1D<int> results, int index);
-    float getBiasDiff(Vector2D<float> inputs, Vector1D<int> results);
-    float hypothesys(Vector1D<float> input);
-    float sigmoid(float input);
-    float train(float alpha, Vector2D<float> inputs, Vector1D<int> results);
-    void gradientDescent(float alpha, Vector1D<float> weightDiff, float biasDiff);
+    std::pair<float, float> Hypothesys(Vector1D<float> input);
+    void GradientDescent(float alpha, Vector1D<float> weightDiff, float biasDiff);
 
     size_t getInputNumber();
     
     Vector1D<uint8_t> getModelData();
     void loadModelData(Vector1D<uint8_t> modelData);
+
+    std::function<float(float)> activationFunction;
+    std::function<float(float)> activationFunctionGradient;
 };
 
 #endif

@@ -3,7 +3,7 @@
 #include "Tools/load_mnist.h"
 #include "Tools/ProgressBar.h"
 #include "Tools/Defines.h"
-#include "Float/MultiLayerClassification.h"
+#include "Float/MultiLayer.h"
 
 
 using namespace std;
@@ -24,13 +24,31 @@ int main(int argc, char *argv[])
         size_t LabelSize = mnist_labels.shape().y;
         size_t DatasetNum = mnist_images.shape().y;
 
-        MultiLayerClassification MyNet(Vector1D<size_t>({ImageSize, 100, 200, LabelSize}), Defines::CrossEntropyError);
+        MultiLayer MyNet(
+            Glow::Defines::CategoricalCrossEntropyLoss,
+            Glow::Defines::CategoricalCrossEntropyLossGradient
+        );
+
+        MyNet.addLayer(
+            ImageSize,
+            100,
+            Glow::Defines::ReLU,
+            Glow::Defines::ReLUGradient
+        );
+
+        MyNet.addLayer(
+            100,
+            LabelSize,
+            Glow::Defines::Sigmoid,
+            Glow::Defines::SigmoidGradient
+        );
+
         size_t BatchNum = 600;
-        size_t EpochNum = 1;
+        size_t EpochNum = 3;
         size_t BatchDataNum = DatasetNum / BatchNum;
 
         ProgressBar Bar(BatchNum);
-        float LearningRate = 1.0f;
+        float LearningRate = 0.001f;
 
         for (size_t i = 0; i < EpochNum; i++) 
         {
@@ -43,6 +61,7 @@ int main(int argc, char *argv[])
                 Bar.update(j + 1, "Epoch: " + to_string(i + 1) + " Loss: " + to_string(loss));
                 cout << endl;
             }
+            LearningRate *= 0.8f;
         }
 
         Vector2D<float> test_mnist_images = get_mnist_image_float("/home/sier/MyFixNet/Datasets/t10k-images-idx3-ubyte");
@@ -57,7 +76,7 @@ int main(int argc, char *argv[])
         for(size_t i = 0; i < TestDatasetNum; i++)
         {
             Vector1D<float> estimate = MyNet.Classify(test_mnist_images[i]);
-            if(i % 100 == 0) cout << "Estimate: " << estimate << endl;
+            if(i % 100 == 0) cout << "Estimate: " << Glow::Defines::Softmax(estimate) << endl;
             
             float max = -100.0f;
             size_t max_index = 0;
