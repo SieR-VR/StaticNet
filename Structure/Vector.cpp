@@ -99,6 +99,9 @@ Vector<T, N> &Vector<T, N>::operator=(const Vector<T, N> &v)
 template <class T, size_t N>
 Vector<T, N> &Vector<T, N>::operator+=(const Vector<T, N> &v)
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator+=: shape mismatch");
+
     for(size_t i = 0; i < length; i++)
         data[i] += v.at(i);
 }
@@ -106,6 +109,9 @@ Vector<T, N> &Vector<T, N>::operator+=(const Vector<T, N> &v)
 template <class T, size_t N>
 Vector<T, N> &Vector<T, N>::operator-=(const Vector<T, N> &v)
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator-=: shape mismatch");
+
     for(size_t i = 0; i < length; i++)
         data[i] -= v.at(i);
 }
@@ -131,6 +137,9 @@ Vector<T, N> &Vector<T, N>::operator/=(const T &s)
 template <class T, size_t N>
 Vector<T, N> Vector<T, N>::operator+(const Vector<T, N> &v) const
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator+: shape mismatch");
+
     Vector<T, N> result = *this;
     result += v;
     return result;
@@ -139,6 +148,9 @@ Vector<T, N> Vector<T, N>::operator+(const Vector<T, N> &v) const
 template <class T, size_t N>
 Vector<T, N> Vector<T, N>::operator-(const Vector<T, N> &v) const
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator-: shape mismatch");
+
     Vector<T, N> result = *this;
     result -= v;
     return result;
@@ -167,6 +179,9 @@ Vector<T, N> Vector<T, N>::operator/(const T &s) const
 template <class T, size_t N>
 bool Vector<T, N>::operator==(const Vector<T, N> &v) const
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator==: shape mismatch");
+
     bool result = true;
 
     for(size_t i = 0; i < v.length; i++)
@@ -178,6 +193,9 @@ bool Vector<T, N>::operator==(const Vector<T, N> &v) const
 template <class T, size_t N>
 bool Vector<T, N>::operator!=(const Vector<T, N> &v) const
 {
+    if(shape() != v.shape())
+        throw std::runtime_error("Vector::operator!=: shape mismatch");
+
     return !(*this == v);
 }
 
@@ -215,6 +233,9 @@ void Vector<T, N>::push_back(const Vector<T, N-1> &v)
 template <class T, size_t N>
 Vector<T, N - 1> Vector<T, N>::pop_back(void)
 {
+    if(!length)
+        throw std::length_error("Vector::pop_back: vector is empty");
+
     Vector<T, N-1> result = data[length - 1];
     data[length - 1].~Vector();
 
@@ -228,7 +249,7 @@ template <class T, size_t N>
 void Vector<T, N>::push_front(const Vector<T, N-1> &v)
 {
     if(length && data[0].shape() != v.shape())
-        throw std::length_error("Vector::push_back: shape mismatch");
+        throw std::length_error("Vector::push_front: shape mismatch");
 
     data = realloc(data, sizeof(Vector<T, N-1>) * (length + 1));
     length++;
@@ -241,6 +262,9 @@ void Vector<T, N>::push_front(const Vector<T, N-1> &v)
 template <class T, size_t N>
 Vector<T, N - 1> Vector<T, N>::pop_front(void)
 {
+    if(!length)
+        throw std::length_error("Vector::pop_front: vector is empty");
+
     Vector<T, N-1> result = data[0];
     data[0].~Vector();
     memmove(data[0], data[1], sizeof(Vector<T, N-1> *) * (length - 1));
@@ -333,6 +357,25 @@ Vector<T, 1>::Vector(void)
 }
 
 template <class T>
+Vector<T, 1>::Vector(const Vector<T, 1> &v)
+{
+    data = (T *)malloc(sizeof(T) * v.length);
+    length = v.length;
+
+    for(size_t i = 0; i < length; i++)
+        data[i] = v[i];
+}
+
+template <class T>
+Vector<T, 1>::Vector(const std::vector<T> &v)
+{
+    data = (T *)malloc(sizeof(T) * v.size());
+    length = v.size();
+    for(size_t i = 0; i < length; i++)
+        data[i] = v[i];
+}
+
+template <class T>
 Vector<T, 1>::~Vector(void)
 {
     free(data);
@@ -389,6 +432,7 @@ T Vector<T, 1>::back(void) const
 //--------------------------------------------------
 // Assignment and compound assignment operator
 //--------------------------------------------------
+
 template <class T>
 Vector<T, 1> &Vector<T, 1>::operator=(const Vector<T, 1> &v)
 {
@@ -404,39 +448,8 @@ Vector<T, 1> &Vector<T, 1>::operator=(const Vector<T, 1> &v)
 template <class T>
 Vector<T, 1> &Vector<T, 1>::operator+=(const Vector<T, 1> &v)
 {
-    for(size_t i = 0; i < length; i++)
-        data[i] += v.at(i);
-}
-
-template <class T>
-Vector<T, 1> &Vector<T, 1>::operator-=(const Vector<T, 1> &v)
-{
-    for(size_t i = 0; i < length; i++)
-        data[i] -= v.at(i);
-}
-
-template <class T>
-Vector<T, 1> &Vector<T, 1>::operator*=(const T &v)
-{
-    for(size_t i = 0; i < length; i++)
-        data[i] *= v;
-}
-
-template <class T>
-Vector<T, 1> &Vector<T, 1>::operator/=(const T &v)
-{
-    for(size_t i = 0; i < length; i++)
-        data[i] /= v;
-}
-
-//--------------------------------------------------
-// Calculation operator
-//--------------------------------------------------
-
-template <class T>
-Vector<T, 1> &Vector<T, 1>::operator+=(const Vector<T, 1> &v)
-{
-    Vector<T, 1> result = *this;
+    if(length != v.length)
+        throw std::length_error("Vector::operator+=: shape mismatch");
 
     for(size_t i = 0; i < length; i++)
         data[i] += v.at(i);
@@ -445,6 +458,9 @@ Vector<T, 1> &Vector<T, 1>::operator+=(const Vector<T, 1> &v)
 template <class T>
 Vector<T, 1> &Vector<T, 1>::operator-=(const Vector<T, 1> &v)
 {
+    if(length != v.length)
+        throw std::length_error("Vector::operator-=: shape mismatch");
+
     for(size_t i = 0; i < length; i++)
         data[i] -= v.at(i);
 }
@@ -470,6 +486,9 @@ Vector<T, 1> &Vector<T, 1>::operator/=(const T &v)
 template <class T>
 Vector<T, 1> Vector<T, 1>::operator+(const Vector<T, 1> &v) const
 {
+    if(length != v.length)
+        throw std::length_error("Vector::operator+=: shape mismatch");
+
     Vector<T, 1> result = *this;
     result += v;
     return result;
@@ -478,6 +497,9 @@ Vector<T, 1> Vector<T, 1>::operator+(const Vector<T, 1> &v) const
 template <class T>
 Vector<T, 1> Vector<T, 1>::operator-(const Vector<T, 1> &v) const
 {
+    if(length != v.length)
+        throw std::length_error("Vector::operator-=: shape mismatch");
+
     Vector<T, 1> result = *this;
     result -= v;
     return result;
@@ -506,6 +528,9 @@ Vector<T, 1> Vector<T, 1>::operator/(const T &v) const
 template <class T>
 bool Vector<T, 1>::operator==(const Vector<T, 1> &v) const
 {
+    if(length != v.length)
+        throw std::length_error("Vector::operator==: shape mismatch");
+
     bool result = true;
 
     for(size_t i = 0; i < length; i++)
@@ -515,8 +540,11 @@ bool Vector<T, 1>::operator==(const Vector<T, 1> &v) const
 }
 
 template <class T>
-bool Vector<T, 1>::operator==(const Vector<T, 1> &v) const
+bool Vector<T, 1>::operator!=(const Vector<T, 1> &v) const
 {
+    if(length != v.length)
+        throw std::length_error("Vector::operator!=: shape mismatch");
+
     return !(*this == v);
 }
 
@@ -551,6 +579,8 @@ void Vector<T, 1>::push_back(const T &v)
 template <class T>
 T Vector<T, 1>::pop_back(void)
 {
+    if(!length)
+        throw std::runtime_error("Vector::pop_back: vector doesn't have any value!");
     T result = data[length - 1];
 
     data = realloc(data, sizeof(T) * (length - 1));
@@ -572,6 +602,9 @@ void Vector<T, 1>::push_front(const T &v)
 template <class T>
 T Vector<T, 1>::pop_front(void)
 {
+    if(!length)
+        throw std::runtime_error("Vector::pop_front: vector doesn't have any value!");
+
     T result = data[0];
     memmove(data[0], data[1], sizeof(T *) * (length - 1));
 
@@ -591,12 +624,12 @@ Vector<T, 1> Vector<T, 1>::slice(const Vector<size_t, 1> &start, const Vector<si
     if(1 != start.length || 1 != end.length)
         throw std::length_error("Vector::slice: Dimension size mismatch");
 
-    bool flag = start[0] > end[0];
+    bool flag = start.at(0) > end.at(0);
     if(flag)
         throw std::length_error("Vector::slice: Some member of start is bigger than end's one");
 
     Vector<T, 1> result;
-    for(size_t i = start[0]; i < end[0]; i++)
+    for(size_t i = start.at(0); i < end.at(0); i++)
         result.push_back(at(i));
 
     return result;
@@ -605,7 +638,7 @@ Vector<T, 1> Vector<T, 1>::slice(const Vector<size_t, 1> &start, const Vector<si
 template <class T>
 Vector<T, 1> Vector<T, 1>::slice(const size_t &start, const size_t &end) const
 {
-    bool flag = start[0] > end[0];
+    bool flag = start > end;
     if(flag)
         throw std::length_error("Vector::slice: Some member of start is bigger than end's one");
 
@@ -673,6 +706,18 @@ T Vector<T, 1>::sum(void) const
 
     for(int i = 0; i < length; i++)
         result += data[i];
+
+    return result;
+}
+
+template <class T>
+Vector<T, 1> Vector<T, 1>::reverse(void) const
+{
+    Vector<T, 1> result;
+    result.resize(length, 0);
+    
+    for(int i = 0; i < length; i++)
+        result[i] = data[length - i - 1];
 
     return result;
 }
