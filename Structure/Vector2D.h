@@ -55,7 +55,10 @@ public:
         value.clear();
     }
 
-    ~Vector2D() {}
+    ~Vector2D() 
+    {
+        value.clear();
+    }
 
     T &at(const Vector2DSize_t &index)
     {
@@ -110,7 +113,7 @@ public:
         return *this;
     }
 
-    Vector2D<T> &operator-=(const Vector2D &m_value)
+    Vector2D<T> &operator-=(Vector2D m_value)
     {
         if (shape() != m_value.shape())
         {
@@ -232,7 +235,7 @@ public:
         return result;
     }
 
-    Vector2D<T> operator*(const Vector2D &m_value) const
+    Vector2D<T> operator*(Vector2D m_value)
     {
         if (shape() != m_value.shape())
         {
@@ -262,7 +265,7 @@ public:
         return result;
     }
 
-    Vector2D<T> operator*(const T &m_value) const
+    Vector2D<T> operator*(const T &m_value)
     {
         Vector2D<T> result;
         result.resize(shape());
@@ -273,7 +276,7 @@ public:
         return result;
     }
 
-    Vector2D<T> operator/(const T &m_value) const
+    Vector2D<T> operator/(const T &m_value)
     {
         Vector2D<T> result;
         result.resize(shape());
@@ -343,7 +346,7 @@ public:
             break;
         }
         case Vector2DAxis_t::Y:
-        {           
+        {
             if (shape().x != m_value.shape().x)
             {
                 throw std::invalid_argument("Vector2D::push: vector x size mismatch");
@@ -356,7 +359,7 @@ public:
         }
     }
 
-    void push(const Vector2D &m_value, const Vector2DAxis_t &m_axis)
+    void push(Vector2D m_value, const Vector2DAxis_t &m_axis)
     {
         switch (m_axis)
         {
@@ -422,11 +425,12 @@ public:
         return result;
     }
 
-    Vector2D<T> map(const std::function<T(T)> &m_function) const
+    Vector2D<T> map(const std::function<T(T)> &m_function)
     {
         Vector2D<T> result;
+        result.resize(shape());
         for (size_t i = 0; i < value.size(); i++)
-            result.push(value[i].map(m_function));
+            result[i] = value[i].map(m_function);
 
         return result;
     }
@@ -450,10 +454,10 @@ public:
         return result;
     }
 
-    Vector2D<T> transpose() const
+    Vector2D<T> transpose()
     {
         Vector2D<T> result;
-        result.resize({shape().x, shape().y});
+        result.resize({shape().y, shape().x});
         for (size_t i = 0; i < shape().y; i++)
             for (size_t j = 0; j < shape().x; j++)
                 result.value[j].at(i) = value[i].at(j);
@@ -461,10 +465,51 @@ public:
         return result;
     }
 
+    Vector2D<T> dot(Vector2D<T> m_value)
+    {
+        Vector2D<T> result;
+
+        if (shape().x == m_value.shape().y)
+        {
+            result.resize({shape().y, m_value.shape().x});
+            for (size_t i = 0; i < shape().y; i++)
+                for (size_t j = 0; j < m_value.shape().x; j++)
+                    result.value[j].at(i) = this->at(i, Vector2DAxis_t::Y).dot(m_value.at(j, Vector2DAxis_t::X));
+
+            return result;
+        }
+        else if (shape().y == m_value.shape().x)
+        {
+            result.resize({shape().x, m_value.shape().y});
+            for (size_t i = 0; i < shape().x; i++)
+                for (size_t j = 0; j < m_value.shape().y; j++)
+                    result.value[j].at(i) = this->at(i, Vector2DAxis_t::X).dot(m_value.at(j, Vector2DAxis_t::Y));
+
+            return result;
+        }
+
+        throw std::invalid_argument("Vector2D::dot: vector size mismatch");
+    }
+
+    Vector1D<T> dot(Vector1D<T> m_value)
+    {
+        if (shape().y != m_value.shape().x)
+            throw std::invalid_argument("Vector2D::dot: vector size mismatch");
+
+        Vector1D<T> result;
+        result.resize({shape().x});
+        for (size_t i = 0; i < shape().x; i++)
+            result[i] = value[i].dot(m_value[i]);
+
+        return result;
+    }
+
     Vector2DSize_t shape() const
     {
-        if(value.size() == 0) return {0, 0};
-        else return {value[0].shape().x, value.size()};
+        if (value.size() == 0)
+            return {0, 0};
+        else
+            return {value[0].shape().x, value.size()};
     }
 
 private:

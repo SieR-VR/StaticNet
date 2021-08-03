@@ -105,9 +105,11 @@ Vector2D<int> get_mnist_label(std::string full_path)
     auto raw_labels = read_mnist_labels(full_path, label_num);
 
     std::vector<std::vector<int>> mnist_labels;
-    for(int i = 0; i < 10; i++) {
+    for (int i = 0; i < label_num; i++)
+    {
         std::vector<int> temp;
-        for(int j = 0; j < label_num; j++) temp.push_back(raw_labels[j] == i);
+        for (int j = 0; j < 10; j++) // 10 classes
+            temp.push_back(raw_labels[i] == j ? 1 : 0);
         mnist_labels.push_back(temp);
     }
 

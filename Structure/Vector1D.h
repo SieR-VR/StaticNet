@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <stdexcept>
+#include <utility>
 
 struct Vector1DSize_t
 {
@@ -34,7 +35,7 @@ template <typename T>
 class Vector1D
 {
 public:
-    Vector1D(const std::vector<T> &m_value)
+    Vector1D(const std::vesctor<T> &m_value)
     {
         value = m_value;
     }
@@ -254,16 +255,34 @@ public:
         return result;
     }
 
-    float mean() const
+    std::pair<T, size_t> max() const
     {
-        float sum = 0;
+        std::pair<T, size_t> max;
+        max.first = value[0];
+        max.second = 0;
+
+        for (size_t i = 1; i < value.size(); i++)
+        {
+            if (value[i] > max.first)
+            {
+                max.first = value[i];
+                max.second = i;
+            }
+        }
+
+        return max;
+    }
+
+    T mean() const
+    {
+        T sum = 0;
         for (size_t i = 0; i < value.size(); i++)
             sum += value[i];
 
         return sum;
     }
 
-    bool operator==(const Vector1D<T> &m_value) const
+    bool operator==(Vector1D<T> m_value)
     {
         if (shape() != m_value.shape())
         {
@@ -279,7 +298,7 @@ public:
         return true;
     }
 
-    bool operator!=(const Vector1D<T> &m_value) const
+    bool operator!=(Vector1D<T> m_value)
     {
         return !(*this == m_value);
     }
@@ -368,6 +387,17 @@ public:
         return result;
     }
 
+    float dot(const Vector1D<T> &m_value) const
+    {
+        if (shape() != m_value.shape())
+        {
+            throw std::invalid_argument("Vector1D::dot: shape mismatch");
+            return 0;
+        }
+
+        return (*this * m_value).mean();
+    }
+
     Vector1DSize_t shape() const
     {
         return {value.size()};
@@ -383,13 +413,13 @@ std::ostream &operator<<(std::ostream &m_os, Vector1D<T> m_value)
     for (size_t i = 0; i < m_value.shape().x; i++)
     {
         if (i == m_value.shape().x - 1)
-            m_os << m_value[i] << std::string("]");
+            m_os << m_value[i];
         else
             m_os << m_value[i] << std::string(", ");
     }
+    m_os << std::string("]");
 
     return m_os;
 }
-
 
 #endif
