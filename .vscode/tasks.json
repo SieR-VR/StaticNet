@@ -8,8 +8,8 @@
                 "-o",
                 "${workspaceFolder}/MyFixNet",
                 "${workspaceFolder}/main.cpp",
-                "${workspaceFolder}/Structure/Vector.cpp"
-               
+                "-std=gnu++17",
+                "-g"
             ],
             "options": {
                 "cwd": "${fileDirname}"
