@@ -8,7 +8,7 @@
             "name": "Very Cool Debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/MyFixNet",
+            "program": "${workspaceFolder}/SingleNet",
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

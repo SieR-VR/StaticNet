@@ -6,8 +6,10 @@
             "command": "/usr/bin/g++",
             "args": [
                 "-o",
-                "${workspaceFolder}/MyFixNet",
+                "${workspaceFolder}/SingleNet",
                 "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/Tools/Datasets.cpp",
+                "${workspaceFolder}/Tools/ProgressBar.cpp",
                 "-std=gnu++17",
                 "-g"
             ],

@@ -1,6 +1,6 @@
-#include "load_mnist.h"
+#include "Datasets.h"
 
-std::vector<unsigned char *> read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
+std::vector<unsigned char *> SingleNet::Datasets::MNIST::Raw::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
 {
     auto reverseInt = [](int i)
     {
@@ -44,7 +44,7 @@ std::vector<unsigned char *> read_mnist_images(std::string full_path, int &numbe
     }
 }
 
-std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_of_labels)
+std::vector<unsigned char> SingleNet::Datasets::MNIST::Raw::read_mnist_labels(std::string full_path, int &number_of_labels)
 {
     auto reverseInt = [](int i)
     {
@@ -82,15 +82,15 @@ std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_
     }
 }
 
-Vector2D<float> get_mnist_image_float(std::string full_path)
+SingleNet::Vector<float, 2> SingleNet::Datasets::MNIST::Image(std::string full_path)
 {
     int image_num, image_size;
-    auto raw_images = read_mnist_images(full_path, image_num, image_size);
+    auto raw_images = Raw::read_mnist_images(full_path, image_num, image_size);
 
-    std::vector<std::vector<float>> mnist_images;
+    SingleNet::Vector<float, 2> mnist_images;
     for (int i = 0; i < image_num; i++)
     {
-        std::vector<float> temp;
+        SingleNet::Vector<float, 1> temp;
         for (int j = 0; j < image_size; j++)
             temp.push_back(((int)raw_images[i][j]) / 255.0f);
         mnist_images.push_back(temp);
@@ -99,20 +99,19 @@ Vector2D<float> get_mnist_image_float(std::string full_path)
     return mnist_images;
 }
 
-Vector2D<int> get_mnist_label(std::string full_path)
+SingleNet::Vector<bool, 2> SingleNet::Datasets::MNIST::Label(std::string full_path)
 {
     int label_num;
-    auto raw_labels = read_mnist_labels(full_path, label_num);
+    auto raw_labels = Raw::read_mnist_labels(full_path, label_num);
 
-    std::vector<std::vector<int>> mnist_labels;
+    SingleNet::Vector<bool, 2> mnist_labels;
     for (int i = 0; i < label_num; i++)
     {
-        std::vector<int> temp;
+        SingleNet::Vector<bool, 1> temp;
         for (int j = 0; j < 10; j++) // 10 classes
-            temp.push_back(raw_labels[i] == j ? 1 : 0);
+            temp.push_back(raw_labels[i] == j ? true : false);
         mnist_labels.push_back(temp);
     }
 
-    Vector2D<int> mnist_labels_int(mnist_labels);
-    return mnist_labels_int;
+    return mnist_labels;
 }
