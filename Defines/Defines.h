@@ -2,13 +2,12 @@
 #define MODEL_DATA_DEFINES
 
 #include <cmath>
-#include "../Structure/Vector.h"
+#include "../Vector.h"
 
 namespace SingleNet
 {
     namespace Defines
     {
-
         enum class ModelNumberType : uint8_t
         {
             FIXED = 0,

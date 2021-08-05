@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <time.h>
-#include "../Structure/Vector.h"
-#include "../Tools/Defines.h"
+#include "../Vector.h"
+#include "../Defines/Defines.h"
 
 namespace SingleNet
 {

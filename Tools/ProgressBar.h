@@ -5,20 +5,26 @@
 #include <string>
 #include <cmath>
 
-class ProgressBar
+namespace SingleNet
 {
-public:
-    ProgressBar(int maxValue);
-    ~ProgressBar();
+    namespace Tools
+    {
+        class ProgressBar
+        {
+        public:
+            ProgressBar(int maxValue);
+            ~ProgressBar();
 
-    void update(int value, const std::string &text);
+            void update(int value, const std::string &text);
 
-private:
-    int m_maxValue;
-    int m_value;
-    std::string m_text;
+        private:
+            int m_maxValue;
+            int m_value;
+            std::string m_text;
 
-    bool m_visibleFlag;
-};
+            bool m_visibleFlag;
+        };
+    }
+}
 
 #endif

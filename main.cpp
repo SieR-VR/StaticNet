@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "Structure/Vector.h"
-#include "Tools/Datasets.h"
+#include "Vector.h"
+#include "Datasets/Datasets.h"
 #include "Tools/ProgressBar.h"
 #include "Float/Aww.h"
 
@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
         // Network
         auto Network = TwoLayerNet(InputSize, 100, OutputSize);
-        auto Bar = ProgressBar(DatasetSize);
+        auto Bar = Tools::ProgressBar(DatasetSize);
 
         // Training
         size_t Batch = 100;
@@ -55,8 +55,8 @@ int main(int argc, char *argv[])
             }
         }
     }
-    catch (const std::exception &e)
+    catch (const Tools::StackTrace &e)
     {
-        std::cerr << e.what() << '\n';
+        e.print();
     }
 }

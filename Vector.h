@@ -2,12 +2,15 @@
 #define VECTOR_H
 
 #include <vector>
+#include <deque>
 #include <cstdlib>
 #include <memory.h>
 #include <stdexcept>
 #include <functional>
 #include <condition_variable>
 #include <initializer_list>
+
+#include "Tools/StackTrace.h"
 
 namespace SingleNet
 {
@@ -16,8 +19,8 @@ namespace SingleNet
     {
     public:
         typedef typename std::conditional<N == 1, T, Vector<T, N - 1>>::type VectorT;
-        typedef VectorT *iterator;
-        typedef const VectorT *const_iterator;
+        typedef typename std::deque<VectorT>::iterator iterator;
+        typedef typename std::deque<VectorT>::const_iterator const_iterator;
 
         //--------------------------------------------------
         // Constructors
@@ -25,16 +28,16 @@ namespace SingleNet
 
         Vector(void)
         {
-            data = (VectorT *)malloc(sizeof(VectorT) * 0);
+            data.clear();
             length = 0;
         }
 
         Vector(std::initializer_list<T> list)
         {
-            data = (VectorT *)malloc(sizeof(VectorT) * list.size());
+            data.resize(list.size());
             length = list.size();
 
-            iterator i = data;
+            iterator i = data.begin();
 
             for (auto &e : list)
                 *i++ = e;
@@ -42,7 +45,7 @@ namespace SingleNet
 
         Vector(const Vector<T, N> &v)
         {
-            data = (VectorT *)malloc(sizeof(VectorT) * v.length);
+            data.resize(v.length);
             length = v.length;
 
             for (size_t i = 0; i < v.length; i++)
@@ -52,7 +55,6 @@ namespace SingleNet
         ~Vector()
         {
             clear();
-            data = nullptr;
         }
 
         //--------------------------------------------------
@@ -62,10 +64,10 @@ namespace SingleNet
         VectorT &operator[](const size_t &i)
         {
             if (!length)
-                throw std::runtime_error("Vector::at: vector doesn't have any value!");
+                throw Tools::StackTrace("Vector::at: vector doesn't have any value!");
 
             if (i >= length || i < 0)
-                throw std::out_of_range("Vector::operator[]: can't access out of range index!");
+                throw Tools::StackTrace("Vector::operator[]: can't access out of range index!");
 
             return data[i];
         }
@@ -73,10 +75,10 @@ namespace SingleNet
         VectorT at(const size_t &i) const
         {
             if (!length)
-                throw std::runtime_error("Vector::at: vector doesn't have any value!");
+                throw Tools::StackTrace("Vector::at: vector doesn't have any value!");
 
             if (i >= length || i < 0)
-                throw std::out_of_range("Vector::at: can't access out of range index!");
+                throw Tools::StackTrace("Vector::at: can't access out of range index!");
 
             return data[i];
         }
@@ -84,7 +86,7 @@ namespace SingleNet
         VectorT front() const
         {
             if (!length)
-                throw std::runtime_error("Vector::at: vector doesn't have any value!");
+                throw Tools::StackTrace("Vector::at: vector doesn't have any value!");
 
             return data[0];
         }
@@ -92,7 +94,7 @@ namespace SingleNet
         VectorT back() const
         {
             if (!length)
-                throw std::runtime_error("Vector::at: vector doesn't have any value!");
+                throw Tools::StackTrace("Vector::at: vector doesn't have any value!");
 
             return data[length - 1];
         }
@@ -105,14 +107,8 @@ namespace SingleNet
         {
             clear();
 
-            data = (VectorT *)realloc(data, sizeof(VectorT) * v.length);
+            data = v.data;
             length = v.length;
-
-            for (size_t i = 0; i < length; i++)
-            {
-                memset(&data[i], 0, sizeof(VectorT));
-                data[i] = v.at(i);
-            }
 
             return *this;
         }
@@ -120,7 +116,7 @@ namespace SingleNet
         Vector<T, N> &operator+=(const Vector<T, N> &v)
         {
             if (shape() != v.shape())
-                throw std::runtime_error("Vector::operator+=: shape mismatch");
+                throw Tools::StackTrace("Vector::operator+=: shape mismatch");
 
             for (size_t i = 0; i < length; i++)
                 data[i] += v.at(i);
@@ -131,7 +127,7 @@ namespace SingleNet
         Vector<T, N> &operator-=(const Vector<T, N> &v)
         {
             if (shape() != v.shape())
-                throw std::runtime_error("Vector::operator-=: shape mismatch");
+                throw Tools::StackTrace("Vector::operator-=: shape mismatch");
 
             for (size_t i = 0; i < length; i++)
                 data[i] -= v.at(i);
@@ -162,7 +158,7 @@ namespace SingleNet
         Vector<T, N> operator+(const Vector<T, N> &v) const
         {
             if (shape() != v.shape())
-                throw std::runtime_error("Vector::operator+: shape mismatch");
+                throw Tools::StackTrace("Vector::operator+: shape mismatch");
 
             Vector<T, N> result = *this;
             result += v;
@@ -172,7 +168,7 @@ namespace SingleNet
         Vector<T, N> operator-(const Vector<T, N> &v) const
         {
             if (shape() != v.shape())
-                throw std::runtime_error("Vector::operator-: shape mismatch");
+                throw Tools::StackTrace("Vector::operator-: shape mismatch");
 
             Vector<T, N> result = *this;
             result -= v;
@@ -200,7 +196,7 @@ namespace SingleNet
         bool operator==(const Vector<T, N> &v) const
         {
             if (length != v.length)
-                throw std::runtime_error("Vector::operator==: shape mismatch");
+                throw Tools::StackTrace("Vector::operator==: shape mismatch");
 
             bool result = true;
 
@@ -214,7 +210,7 @@ namespace SingleNet
         bool operator!=(const Vector<T, N> &v) const
         {
             if (length != v.length)
-                throw std::runtime_error("Vector::operator!=: shape mismatch");
+                throw Tools::StackTrace("Vector::operator!=: shape mismatch");
 
             return !(*this == v);
         }
@@ -246,25 +242,22 @@ namespace SingleNet
         {
             if constexpr (!std::is_same<VectorT, T>::value)
                 if (length && data[0].shape() != v.shape())
-                    throw std::length_error("Vector::push_back: shape mismatch");
+                    throw Tools::StackTrace("Vector::push_back: shape mismatch");
 
-            data = (VectorT *)realloc(data, sizeof(VectorT) * (length + 1));
+            data.push_back(v);
             length++;
-            memset(&data[length - 1], 0, sizeof(VectorT));
-
-            data[length - 1] = v;
         }
 
         VectorT pop_back(void)
         {
             if (!length)
-                throw std::length_error("Vector::pop_back: vector is empty");
+                throw Tools::StackTrace("Vector::pop_back: vector is empty");
 
             VectorT result = data[length - 1];
             if constexpr (!std::is_same<VectorT, T>::value)
                 data[length - 1].~Vector();
 
-            data = (VectorT *)realloc(data, sizeof(VectorT) * (length - 1));
+            data.pop_back();
             length--;
 
             return result;
@@ -273,13 +266,10 @@ namespace SingleNet
         void push_front(const VectorT &v)
         {
             if constexpr (!std::is_same<VectorT, T>::value && length && data[0].shape() != v.shape())
-                throw std::length_error("Vector::push_front: shape mismatch");
+                throw Tools::StackTrace("Vector::push_front: shape mismatch");
 
-            data = (VectorT *)realloc(data, sizeof(VectorT) * (length + 1));
+            data.insert(data.begin(), v);
             length++;
-
-            memmove(data[1], data[0], sizeof(VectorT *) * (length - 1));
-            memset(&data[0], 0, sizeof(VectorT));
 
             data[0] = v;
         }
@@ -287,15 +277,13 @@ namespace SingleNet
         VectorT pop_front(void)
         {
             if (!length)
-                throw std::length_error("Vector::pop_front: vector is empty");
+                throw Tools::StackTrace("Vector::pop_front: vector is empty");
 
             VectorT result = data[0];
             if constexpr (!std::is_same<VectorT, T>::value)
                 data[0].~Vector();
 
-            memmove(data[0], data[1], sizeof(VectorT *) * (length - 1));
-
-            data = (VectorT *)realloc(data, sizeof(VectorT) * (length - 1));
+            data.erase(data.begin());
             length--;
 
             return result;
@@ -308,7 +296,7 @@ namespace SingleNet
         Vector<T, N> slice(const Vector<size_t, 1> &start, const Vector<size_t, 1> &end) const
         {
             if (N != start.length || N != end.length)
-                throw std::length_error("Vector::slice: Dimension size mismatch");
+                throw Tools::StackTrace("Vector::slice: Dimension size mismatch");
 
             bool flag = true;
             for (size_t i = 0; i < start.length; i++)
@@ -316,7 +304,7 @@ namespace SingleNet
                     flag = false;
 
             if (!flag)
-                throw std::length_error("Vector::slice: Some member of start is bigger than end's one");
+                throw Tools::StackTrace("Vector::slice: Some member of start is bigger than end's one");
 
             Vector<T, N> result;
             Vector<size_t, 1> start_copy = start, end_copy = end;
@@ -347,32 +335,27 @@ namespace SingleNet
                 for (size_t i = 0; i < length; i++)
                     data[i].clear();
 
-            if (data && length)
-                free(data);
-
-            data = (VectorT *)malloc(sizeof(VectorT) * 0);
+            data.clear();
             length = 0;
         }
 
         void resize(const Vector<size_t, 1> &n, const T &s)
         {
             if (N != n.length)
-                throw std::length_error("Vector::resize: Dimension size mismatch");
+                throw Tools::StackTrace("Vector::resize: Dimension size mismatch");
 
             Vector<size_t, 1> n_copy = n;
 
             clear();
-            data = (VectorT *)realloc(data, sizeof(VectorT *) * n_copy.back());
+            data.resize(n_copy.back());
             length = n_copy.pop_back();
 
             if constexpr (!std::is_same<VectorT, T>::value)
-            {
                 for (size_t i = 0; i < length; i++)
-                {
-                    memset(&data[i], 0, sizeof(VectorT));
                     data[i].resize(n_copy, s);
-                }
-            }
+            else
+                for (size_t i = 0; i < length; i++)
+                    data[i] = s;
         }
 
         Vector<T, 1> from(const std::vector<T> &v)
@@ -412,7 +395,7 @@ namespace SingleNet
         size_t length;
 
     private:
-        VectorT *data;
+        std::deque<VectorT> data;
     };
 
     namespace Utils
@@ -446,7 +429,7 @@ namespace SingleNet
         T dot(const Vector<T, 1> &v1, const Vector<T, 1> &v2)
         {
             if (v1.length != v2.length)
-                throw std::length_error("Utils::dot: size mismatch");
+                throw Tools::StackTrace("Utils::dot: size mismatch");
 
             T result = 0;
             for (size_t i = 0; i < v1.length; i++)
@@ -459,7 +442,7 @@ namespace SingleNet
         std::pair<T, size_t> max(const Vector<T, 1> &v)
         {
             if (v.length == 0)
-                throw std::length_error("Utils::max: vector is empty");
+                throw Tools::StackTrace("Utils::max: vector is empty");
 
             T max = v.at(0);
             size_t index = 0;
@@ -497,7 +480,7 @@ namespace SingleNet
         Vector<T, 2> dot(const Vector<T, 2> &v1, const Vector<T, 2> &v2)
         {
             if (v1.shape()[1] != v2.shape()[0])
-                throw std::length_error("Utils::dot: size mismatch");
+                throw Tools::StackTrace("Utils::dot: size mismatch");
 
             Vector<size_t, 1> shape = {v1.shape()[0], v2.shape()[1]};
 
