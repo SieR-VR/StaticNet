@@ -2,17 +2,17 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "Also Very Cool Build",
+            "label": "Debug Build",
             "command": "/usr/bin/g++",
             "args": [
                 "-o",
-                "${workspaceFolder}/SingleNet",
+                "${workspaceFolder}/bin/SingleNet",
                 "${workspaceFolder}/main.cpp",
-                "${workspaceFolder}/Datasets/Datasets.cpp",
-                "${workspaceFolder}/Tools/ProgressBar.cpp",
-                "${workspaceFolder}/Tools/StackTrace.cpp",
-                "-std=gnu++2a",
-                "-g"
+                "-std=gnu++17",
+                "-g",
+                "-mavx",
+                "-D", 
+                "_DEBUG"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -24,6 +24,29 @@
                 "kind": "build",
                 "isDefault": true
             }
+        },
+        {
+            "type": "cppbuild",
+            "label": "Release Build",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-o",
+                "${workspaceFolder}/SingleNet",
+                "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/Datasets/Datasets.cpp",
+                "${workspaceFolder}/Tools/ProgressBar.cpp",
+                "${workspaceFolder}/Tools/StackTrace.cpp",
+                "-std=gnu++17",
+                "-O3",
+                "-mavx"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
         }
     ],
     "version": "2.0.0"
