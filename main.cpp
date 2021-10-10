@@ -1,15 +1,44 @@
 #include <iostream>
 
-#include "Vector.h"
+#include "Float/Layers.h"
 
 using namespace std;
 using namespace SingleNet;
 
 int main(int argc, char *argv[])
 {
-    Vector<float, 2> Tensor_(2, 2, 1.0f);
-    Tensor_[1][0] = 2.0f;
+    std::function ReLU = [](float x) { return x > 0 ? x : 0; };
+    std::function ReLU_derivative = [](float x) { return x > 0 ? 1 : 0; };
 
-    std::cout << Tensor_ << std::endl;
-    std::cout << transpose(Tensor_) << std::endl;
+    Sequential net({
+        Layer(new Net(2, 2), new Activation(ReLU, ReLU_derivative)),
+        Layer(new Net(2, 1), new Sigmoid())
+    });
+
+    Vector<float, 2> XOR_Data = {
+        {0, 0},
+        {0, 1},
+        {1, 0},
+        {1, 1}
+    };
+
+    Vector<float, 2> XOR_Labels = {
+        {0},
+        {0},
+        {0},
+        {1}
+    };
+
+    for (int i = 0; i < 1000000; i++)
+    {
+        if (i % 100000 == 0)
+        {
+            std::cout << "Net.Train(): XOR, Loss: " << net.Train(XOR_Data, XOR_Labels, 0.1) << std::endl;
+        }
+    }
+
+    for (int i = 0; i < XOR_Data.size(); i++)
+    {
+        std::cout << "XOR_Data[" << i << "]: " << XOR_Data[i] << " -> " << net.Predict(XOR_Data[i]) << std::endl;
+    }
 }
