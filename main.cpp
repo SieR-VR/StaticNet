@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 
     Sequential net({
         Layer(new Net(2, 2), new Activation(ReLU, ReLU_derivative)),
-        Layer(new Net(2, 1), new Sigmoid())
+        Layer(new Net(2, 2), new Sigmoid())
     });
 
     Vector<float, 2> XOR_Data = {
@@ -23,18 +23,15 @@ int main(int argc, char *argv[])
     };
 
     Vector<float, 2> XOR_Labels = {
-        {0},
-        {0},
-        {0},
-        {1}
+        {0, 1},
+        {1, 0},
+        {1, 0},
+        {0, 1}
     };
 
-    for (int i = 0; i < 1000000; i++)
-    {
-        if (i % 100000 == 0)
-        {
-            std::cout << "Net.Train(): XOR, Loss: " << net.Train(XOR_Data, XOR_Labels, 0.1) << std::endl;
-        }
+    for (int i = 0; i < 1000; i++)
+    { 
+        net.Train(XOR_Data, XOR_Labels, 1);
     }
 
     for (int i = 0; i < XOR_Data.size(); i++)

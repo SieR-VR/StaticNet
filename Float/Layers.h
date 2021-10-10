@@ -84,8 +84,7 @@ namespace SingleNet
                 Vector<float, 2> unBiased = dot(input, transpose(weights));
                 
                 for (size_t i = 0; i < shape(unBiased)[0]; i++)
-                    for (size_t j = 0; j < shape(unBiased)[1]; j++)
-                        unBiased[i][j] += biases[i];
+                    unBiased[i] += biases;
 
                 return unBiased;
             }
@@ -102,7 +101,7 @@ namespace SingleNet
                 Vector<float, 2> delta = dot(nextDelta, weights);
                 Vector<float, 2> nextDeltaTranspose = transpose(nextDelta);
 
-                weights -= dot(nextDeltaTranspose, layerInput) * learningRate;
+                weights -= dot(nextDeltaTranspose, layerInput) * learningRate / (float)shape(layerInput)[0];
                 for (size_t i = 0; i < m_outputSize; i++)
                     biases[i] -= learningRate * mean(nextDeltaTranspose[i]);
 
@@ -152,7 +151,7 @@ namespace SingleNet
                 Vector<float, 2> result(shape(nextDelta)[0], shape(nextDelta)[1]);
                 for (size_t i = 0; i < shape(nextDelta)[0]; i++)
                     for (size_t j = 0; j < shape(nextDelta)[1]; j++)
-                        result[i][j] += m_activationDerivative(layerInput[i][j]) * nextDelta[i][j];
+                        result[i][j] = m_activationDerivative(layerInput[i][j]) * nextDelta[i][j];
 
                 return result;
             }
@@ -201,7 +200,7 @@ namespace SingleNet
                 Vector<float, 2> result(shape(nextDelta)[0], shape(nextDelta)[1]);
                 for (size_t i = 0; i < shape(nextDelta)[0]; i++)
                     for (size_t j = 0; j < shape(nextDelta)[1]; j++)
-                        result[i][j] += m_activationDerivative(layerOutput[i][j]) * nextDelta[i][j];
+                        result[i][j] = m_activationDerivative(layerOutput[i][j]) * nextDelta[i][j];
 
                 return result;
             }
