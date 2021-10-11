@@ -1,5 +1,8 @@
 #include "Datasets.h"
 
+#include <fstream>
+#include <algorithm>
+
 std::vector<unsigned char *> SingleNet::Datasets::MNIST::Raw::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
 {
     auto reverseInt = [](int i)
@@ -99,19 +102,34 @@ SingleNet::Vector<float, 2> SingleNet::Datasets::MNIST::Image(std::string full_p
     return mnist_images;
 }
 
-SingleNet::Vector<bool, 2> SingleNet::Datasets::MNIST::Label(std::string full_path)
+SingleNet::Vector<float, 2> SingleNet::Datasets::MNIST::Label(std::string full_path)
 {
     int label_num;
     auto raw_labels = Raw::read_mnist_labels(full_path, label_num);
 
-    SingleNet::Vector<bool, 2> mnist_labels;
+    SingleNet::Vector<float, 2> mnist_labels;
     for (int i = 0; i < label_num; i++)
     {
-        SingleNet::Vector<bool, 1> temp;
+        SingleNet::Vector<float, 1> temp;
         for (int j = 0; j < 10; j++) // 10 classes
             temp.push_back(raw_labels[i] == j ? true : false);
         mnist_labels.push_back(temp);
     }
 
     return mnist_labels;
+}
+
+SingleNet::Vector<size_t, 1> SingleNet::Datasets::RandomIndexes(size_t size, size_t number_of_indexes)
+{
+    std::vector<size_t> indexes;
+    for (size_t i = 0; i < size; i++)
+        indexes.push_back(i);
+
+    std::random_shuffle(indexes.begin(), indexes.end());
+
+    SingleNet::Vector<size_t, 1> random_indexes;
+    for (size_t i = 0; i < number_of_indexes; i++)
+        random_indexes.push_back(indexes[i]);
+
+    return random_indexes;
 }

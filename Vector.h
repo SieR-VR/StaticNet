@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <ostream>
+#include <functional>
 #include <stdexcept>
 
 namespace SingleNet
@@ -39,6 +40,37 @@ namespace SingleNet
             Vector<size_t, 1> _shape = shape(v[0]);
             _shape.insert(_shape.begin(), v.size());
             return _shape;
+        }
+    }
+
+    template <typename T, size_t N>
+    Vector<T, N> mask(const Vector<T, N> &v, const Vector<size_t, 1> &index)
+    {
+        Vector<T, N> _v;
+        for (size_t i = 0; i < index.size(); i++)
+            _v.push_back(v[index[i]]);
+
+        return _v;
+    }
+
+    template <typename T, size_t N>
+    Vector<T, N> map(const Vector<T, N> &v, const std::function<T(T)> &f)
+    {
+        if constexpr (N == 1)
+        {
+            Vector<T, N> _v;
+            for (size_t i = 0; i < v.size(); i++)
+                _v.push_back(f(v[i]));
+
+            return _v;
+        }
+        else 
+        {
+            Vector<T, N> _v;
+            for (size_t i = 0; i < v.size(); i++)
+                _v.push_back(map(v[i], f));
+
+            return _v;
         }
     }
 
@@ -233,6 +265,24 @@ namespace SingleNet
             sum += v[i];
         
         return sum / v.size();
+    }
+
+    template <typename T>
+    size_t maxIndex(const Vector<T, 1> &v)
+    {
+        size_t max_index = 0;
+        T max_value = v[0];
+
+        for (size_t i = 1; i < v.size(); ++i)
+        {
+            if (v[i] > max_value)
+            {
+                max_value = v[i];
+                max_index = i;
+            }
+        }
+
+        return max_index;
     }
 }
 

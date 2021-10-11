@@ -8,6 +8,7 @@
                 "-o",
                 "${workspaceFolder}/bin/SingleNet",
                 "${workspaceFolder}/main.cpp",
+                "${workspaceFolder}/Datasets/Datasets.cpp",
                 "-std=gnu++17",
                 "-g",
                 "-mavx",

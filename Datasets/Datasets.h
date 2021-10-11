@@ -1,7 +1,6 @@
 #ifndef LOAD_MNIST_H
 #define LOAD_MNIST_H
 
-#include <fstream>
 #include <string>
 #include "../Vector.h"
 
@@ -18,8 +17,10 @@ namespace SingleNet
             }
 
             Vector<float, 2> Image(std::string full_path);
-            Vector<bool, 2> Label(std::string full_path);
+            Vector<float, 2> Label(std::string full_path);
         }
+
+        Vector<size_t, 1> RandomIndexes(size_t size, size_t number_of_indexes);
     }
 }
 
