@@ -1,6 +1,6 @@
 # bazel output files
 
-bazel-bin/
-bazel-out/
-bazel-SingleNet/
-bazel-testlogs/
+bazel-bin
+bazel-out
+bazel-SingleNet
+bazel-testlogs
