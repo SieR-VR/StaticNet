@@ -297,7 +297,6 @@ namespace SingleNet
         cudaFree(shape_ptr_device);
 
         Vector<float, N> result = from_pointer<float, N>(v3_ptr, reverse(shape(v1)));
-        Host_Free<N>(v3_ptr, reverse(shape(v1)));
         return result;
     }
 
@@ -338,7 +337,6 @@ namespace SingleNet
         cudaFree(shape_ptr_device);
 
         Vector<float, N> result = from_pointer<float, N>(v3_ptr, reverse(shape(v1)));
-        Host_Free<N>(v3_ptr, reverse(shape(v1)));
         return result;
     }
 
@@ -396,7 +394,6 @@ namespace SingleNet
         cudaFree(s_ptr_device);
 
         Vector<float, N> result = from_pointer<float, N>(result_ptr, reverse(shape(v1)));
-        Host_Free<N>(result_ptr, reverse(shape(v1)));
         return result;
     }
 
@@ -514,7 +511,7 @@ namespace SingleNet
         }
         catch (std::exception &e)
         {
-            throw std::runtime_error("Vector<float, 1> dot():\t\n" + std::string(e.what()));
+            throw std::runtime_error("Vector<float, 1> dot():\n\t" + std::string(e.what()));
         }
     }
 
@@ -524,28 +521,40 @@ namespace SingleNet
         {
             throw std::runtime_error("dot product error: shape mismatch");
         }
+        try {
+            Vector<float, 2> v2_transposed = transpose(v2);
 
-        Vector<float, 2> v2_transposed = transpose(v2);
+            void *v1_ptr = to_pointer(v1);
+            void *v2_ptr = to_pointer(v2_transposed);
 
-        void *v1_ptr = to_pointer(v1);
-        void *v2_ptr = to_pointer(v2_transposed);
+            void *v1_ptr_device = CUDA_Memcpy<2>(v1_ptr, reverse(shape(v1)));
+            void *v2_ptr_device = CUDA_Memcpy<2>(v2_ptr, reverse(shape(v2_transposed)));
 
-        void *v1_ptr_device = CUDA_Memcpy<2>(v1_ptr, reverse(shape(v1)));
-        void *v2_ptr_device = CUDA_Memcpy<2>(v2_ptr, reverse(shape(v2_transposed)));
+            void *result_ptr_device = CUDA_Malloc<2>({shape(v2)[1], shape(v1)[0]});
 
-        void *result_ptr_device = CUDA_Malloc<2>({shape(v2)[1], shape(v1)[0]});
+            size_t block = MAX_BLOCKS;
+            size_t threads = (v1.size() / MAX_BLOCKS) + 1;
 
-        size_t block = MAX_BLOCKS;
-        size_t threads = (v2_transposed.size() / MAX_BLOCKS) + 1;
-        CUDA_Dot_2D<<<block, threads>>>(v1_ptr_device, v2_ptr_device, result_ptr_device, shape(v1)[1], shape(v1)[0], shape(v2)[1]);
+            CUDA_Dot_2D<<<block, threads>>>(v1_ptr_device, v2_ptr_device, result_ptr_device, shape(v1)[1], shape(v1)[0], shape(v2)[1]);
+            cudaError_t err = cudaDeviceSynchronize();
 
-        void *result_ptr = Host_Memcpy<2>(result_ptr_device, {shape(v2)[1], shape(v1)[0]});
+            if (err != cudaSuccess)
+            {
+                throw std::runtime_error("dot product error: " + std::string(cudaGetErrorString(err)));
+            }
 
-        CUDA_Free<2>(v1_ptr_device, reverse(shape(v1)));
-        CUDA_Free<2>(v2_ptr_device, shape(v2));
-        CUDA_Free<2>(result_ptr_device, {shape(v2)[1], shape(v1)[0]});
+            void *result_ptr = Host_Memcpy<2>(result_ptr_device, {shape(v2)[1], shape(v1)[0]});
 
-        Vector<float, 2> result = from_pointer<float, 2>(result_ptr, {shape(v2)[1], shape(v1)[0]});
-        return result;
+            CUDA_Free<2>(v1_ptr_device, reverse(shape(v1)));
+            CUDA_Free<2>(v2_ptr_device, shape(v2));
+            CUDA_Free<2>(result_ptr_device, {shape(v2)[1], shape(v1)[0]});
+
+            Vector<float, 2> result = from_pointer<float, 2>(result_ptr, {shape(v2)[1], shape(v1)[0]});
+            return result;
+        }
+        catch (std::exception &e)
+        {
+            throw std::runtime_error("Vector<float, 2> dot():\n\t" + std::string(e.what()));
+        }
     }
 }

@@ -353,7 +353,7 @@ namespace SingleNet
             return ptr;
         }
         else {
-            void * ptr = malloc(sizeof(T) * v.size());
+            void * ptr = malloc(sizeof(void *) * v.size());
             for (size_t i = 0; i < v.size(); ++i)
                 (static_cast<void **>(ptr))[i] = to_pointer(v[i]);
 

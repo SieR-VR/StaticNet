@@ -9,7 +9,12 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -g -G -rdc=true -cudart=shared -lcudadevrt")
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true -cudart=shared -lcudadevrt")
+
+if(UNIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+    set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17")
+endif()
 
 add_subdirectory(Core)
 
