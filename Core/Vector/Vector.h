@@ -7,6 +7,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <vector>
+#include <cstring>
 
 namespace SingleNet
 {
@@ -48,6 +49,8 @@ namespace SingleNet
             _shape.insert(_shape.begin(), v.size());
             return _shape;
         }
+
+        return Vector<size_t, 1>();
     }
 
     template <typename T, size_t N>
@@ -122,6 +125,9 @@ namespace SingleNet
         return v;
     }
 
+    template <size_t N>
+    Vector<float, N> operator+(const Vector<float, N> &v1, const Vector<float, N> &v2);
+
     template <typename T, size_t N>
     Vector<T, N> operator-(const Vector<T, N> &v1, const Vector<T, N> &v2)
     {
@@ -135,6 +141,9 @@ namespace SingleNet
         return v;
     }
 
+    template <size_t N>
+    Vector<float, N> operator-(const Vector<float, N> &v1, const Vector<float, N> &v2);
+
     template <typename T, size_t N>
     Vector<T, N> &operator+=(Vector<T, N> &v1, const Vector<T, N> &v2)
     {
@@ -146,6 +155,9 @@ namespace SingleNet
             v1[i] += v2[i];
         return v1;
     }
+    
+    template <size_t N>
+    Vector<float, N> &operator+=(Vector<float, N> &v1, const Vector<float, N> &v2);
 
     template <typename T, size_t N>
     Vector<T, N> &operator-=(Vector<T, N> &v1, const Vector<T, N> &v2)
@@ -159,6 +171,9 @@ namespace SingleNet
         return v1;
     }
 
+    template <size_t N>
+    Vector<float, N> &operator-=(Vector<float, N> &v1, const Vector<float, N> &v2);
+
     template <typename T, size_t N>
     Vector<T, N> operator*(const Vector<T, N> &v1, const T &s)
     {
@@ -168,6 +183,9 @@ namespace SingleNet
 
         return v;
     }
+
+    template <size_t N>
+    Vector<float, N> operator*(const Vector<float, N> &v1, const float &s);
 
     template <typename T, size_t N>
     Vector<T, N> operator*(const T &s, const Vector<T, N> &v1)
@@ -184,6 +202,9 @@ namespace SingleNet
         return v1;
     }
 
+    template <size_t N>
+    Vector<float, N> &operator*=(Vector<float, N> &v1, const float &s);
+
     template <typename T, size_t N>
     Vector<T, N> operator/(const Vector<T, N> &v1, const T &s)
     {
@@ -194,6 +215,9 @@ namespace SingleNet
         return v;
     }
 
+    template <size_t N>
+    Vector<float, N> operator/(const Vector<float, N> &v1, const float &s);
+
     template <typename T, size_t N>
     Vector<T, N> &operator/=(Vector<T, N> &v1, const T &s)
     {
@@ -202,6 +226,9 @@ namespace SingleNet
 
         return v1;
     }
+
+    template <size_t N>
+    Vector<float, N> &operator/=(Vector<float, N> &v1, const float &s);
 
     template <typename T>
     Vector<T, 2> transpose(const Vector<T, 2> &v)
@@ -238,6 +265,8 @@ namespace SingleNet
         return sum;
     }
 
+    float dot(const Vector<float, 1> &v1, const Vector<float, 1> &v2);
+
     template <typename T>
     Vector<T, 1> dot(const Vector<T, 2> &v1, const Vector<T, 1> &v2)
     {
@@ -252,6 +281,8 @@ namespace SingleNet
 
         return res;
     }
+
+    Vector<float, 1> dot(const Vector<float, 2> &v1, const Vector<float, 1> &v2);
 
     template <typename T>
     Vector<T, 2> dot(const Vector<T, 2> &v1, const Vector<T, 2> &v2)
@@ -269,6 +300,8 @@ namespace SingleNet
 
         return v;
     }
+
+    Vector<float, 2> dot(const Vector<float, 2> &v1, const Vector<float, 2> &v2);
 
     template <typename T>
     T mean(const Vector<T, 1> &v)
@@ -298,6 +331,59 @@ namespace SingleNet
 
         return max_index;
     }
+
+    template <typename T>
+    Vector<T, 1> reverse(const Vector<T, 1> &v)
+    {
+        Vector<T, 1> res(v.size());
+
+        for (size_t i = 0; i < v.size(); ++i)
+            res[i] = v[v.size() - i - 1];
+
+        return res;
+    }
+
+    template <typename T, size_t N>
+    void *to_pointer(const Vector<T, N> &v)
+    {
+        if constexpr (N == 1)
+        {
+            void * ptr = malloc(sizeof(T) * v.size());
+            memcpy(ptr, v.data(), sizeof(T) * v.size());
+            return ptr;
+        }
+        else {
+            void * ptr = malloc(sizeof(T) * v.size());
+            for (size_t i = 0; i < v.size(); ++i)
+                (static_cast<void **>(ptr))[i] = to_pointer(v[i]);
+
+            return ptr;
+        }
+
+        return nullptr;
+    }   
+
+    template <typename T, size_t N>
+    Vector<T, N> from_pointer(void *ptr, const Vector<size_t, 1> &shape_reversed)
+    {
+        if constexpr (N == 1)
+        {
+            Vector<T, N> v(shape_reversed[0]);
+            memcpy(v.data(), ptr, sizeof(T) * shape_reversed[0]);
+            return v;
+        }
+        else {
+            Vector<T, N> v(shape_reversed[N-1]);
+
+            for (size_t i = 0; i < shape_reversed[N-1]; ++i)
+                v[i] = from_pointer<T, N-1>(static_cast<void **>(ptr)[i], shape_reversed);
+
+            return v;
+        }
+
+        return Vector<T, N>();
+    }
+
 } // namespace SingleNet
 
 template <typename T, size_t N>

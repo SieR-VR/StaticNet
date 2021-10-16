@@ -5,23 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Very Cool Debug",
-            "type": "cppdbg",
+            "name": "CUDA C++: Launch",
+            "type": "cuda-gdb",
             "request": "launch",
-            "program": "${workspaceFolder}/bin/SingleNet",
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "gdb에 자동 서식 지정 사용",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
-            "miDebuggerPath": "/usr/bin/gdb"
+            "program": "${workspaceFolder}/build/SingleNet"
         }
     ]
 }
