@@ -1,2 +1,8 @@
 # cmake output files
 build/
+
+# vscode config files
+.vscode/
+
+# Datasets
+Datasets/
