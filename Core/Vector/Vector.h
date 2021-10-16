@@ -368,16 +368,20 @@ namespace SingleNet
     {
         if constexpr (N == 1)
         {
-            Vector<T, N> v(shape_reversed[0]);
-            memcpy(v.data(), ptr, sizeof(T) * shape_reversed[0]);
+            Vector<T, 1> v;
+            for (size_t i = 0; i < shape_reversed[0]; ++i)
+                v.push_back((static_cast<T *>(ptr))[i]);
+            
+            if(ptr) free(ptr);
             return v;
         }
         else {
-            Vector<T, N> v(shape_reversed[N-1]);
+            Vector<T, N> v;
 
             for (size_t i = 0; i < shape_reversed[N-1]; ++i)
-                v[i] = from_pointer<T, N-1>(static_cast<void **>(ptr)[i], shape_reversed);
+                v.push_back(from_pointer<T, N-1>(static_cast<void **>(ptr)[i], shape_reversed));
 
+            if(ptr) free(ptr);
             return v;
         }
 

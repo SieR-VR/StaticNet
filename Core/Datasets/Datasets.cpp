@@ -1,7 +1,8 @@
-#include "Datasets.h"
-
 #include <fstream>
+#include <random>
 #include <algorithm>
+
+#include "Core/Datasets/Datasets.h"
 
 std::vector<unsigned char *> SingleNet::Datasets::MNIST::Raw::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
 {
@@ -123,7 +124,9 @@ SingleNet::Vector<size_t, 1> SingleNet::Datasets::RandomIndexes(size_t size, siz
     for (size_t i = 0; i < size; i++)
         indexes.push_back(i);
 
-    std::random_shuffle(indexes.begin(), indexes.end());
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(indexes.begin(), indexes.end(), g);
 
     SingleNet::Vector<size_t, 1> random_indexes;
     for (size_t i = 0; i < number_of_indexes; i++)

@@ -1,5 +1,7 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
+
+#include <string>
 #include <stdexcept>
 
 #include "Vector.h"
@@ -105,11 +107,11 @@ __global__ void CUDA_Dot_2D1D(void *v1, void *v2, void *result, size_t size, siz
 {
     int index = MAX_BLOCKS * threadIdx.x + blockIdx.x;
 
-    if (index > v1_size)
+    if (index < v1_size)
     {
         size_t block, thread;
         CUDA_GetDim(size, &block, &thread);
-        CUDA_Dot_1D<<<block, thread>>>((static_cast<void **>(v1))[index], v2, (static_cast<void **>(result))[index], size);
+        CUDA_Dot_1D<<<block, thread>>>(((void **)v1)[index], v2, &((float *)result)[index], size);
     }
 }
 
@@ -117,12 +119,12 @@ __global__ void CUDA_Dot_2D(void *v1, void *v2, void *result, size_t size, size_
 {
     int index = MAX_BLOCKS * threadIdx.x + blockIdx.x;
 
-    if (v2_size <= index)
-        return;
-
-    size_t block, thread;
-    CUDA_GetDim(v1_size, &block, &thread);
-    CUDA_Dot_2D1D<<<block, thread>>>(v1, (static_cast<void **>(v2))[index], (static_cast<void **>(result))[index], size, v1_size);
+    if (index < v1_size) 
+    {
+        size_t block, thread;
+        CUDA_GetDim(v2_size, &block, &thread);
+        CUDA_Dot_2D1D<<<block, thread>>>(v2, ((void **)v1)[index], ((void **)result)[index], size, v2_size);
+    }
 }
 
 namespace SingleNet
@@ -226,7 +228,9 @@ namespace SingleNet
         {
             void **device_src_copy = (void **)malloc(shape_reversed[N - 1] * sizeof(void *));
             void **dst_host = (void **)malloc(shape_reversed[N - 1] * sizeof(void *));
-            CUDA_CHECK(cudaMemcpy(device_src_copy, device_src, shape_reversed[N - 1] * sizeof(void *), cudaMemcpyDeviceToHost));
+
+            cudaError_t err = cudaMemcpy(device_src_copy, device_src, shape_reversed[N - 1] * sizeof(void *), cudaMemcpyDeviceToHost);
+            CUDA_CHECK(err);
 
             for (size_t i = 0; i < shape_reversed[N - 1]; i++)
             {
@@ -506,7 +510,6 @@ namespace SingleNet
             cudaFree(result_ptr_device);
 
             Vector<float, 1> result = from_pointer<float, 1>(result_ptr, {shape(v1)[0]});
-            Host_Free<1>(result_ptr, {shape(v1)[0]});
             return result;
         }
         catch (std::exception &e)
@@ -528,7 +531,7 @@ namespace SingleNet
         void *v2_ptr = to_pointer(v2_transposed);
 
         void *v1_ptr_device = CUDA_Memcpy<2>(v1_ptr, reverse(shape(v1)));
-        void *v2_ptr_device = CUDA_Memcpy<2>(v2_ptr, shape(v2));
+        void *v2_ptr_device = CUDA_Memcpy<2>(v2_ptr, reverse(shape(v2_transposed)));
 
         void *result_ptr_device = CUDA_Malloc<2>({shape(v2)[1], shape(v1)[0]});
 
@@ -543,7 +546,6 @@ namespace SingleNet
         CUDA_Free<2>(result_ptr_device, {shape(v2)[1], shape(v1)[0]});
 
         Vector<float, 2> result = from_pointer<float, 2>(result_ptr, {shape(v2)[1], shape(v1)[0]});
-        Host_Free<2>(result_ptr, {shape(v2)[1], shape(v1)[0]});
         return result;
     }
 }

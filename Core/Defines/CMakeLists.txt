@@ -1,4 +1,8 @@
-add_compile_options(-std=c++17)
 add_library(Defines
     Defines.cpp
+)
+
+set_target_properties(
+    Defines PROPERTIES
+    CXX_STANDARD 17
 )
