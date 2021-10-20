@@ -61,7 +61,7 @@ namespace SingleNet
             _v.push_back(v[index[i]]);
 
         return _v;
-    }
+    } // move to datasets.cpp
 
     template <typename T, size_t N>
     Vector<T, N> map(const Vector<T, N> &v, const std::function<T(T)> &f)
@@ -125,9 +125,6 @@ namespace SingleNet
         return v;
     }
 
-    template <size_t N>
-    Vector<float, N> operator+(const Vector<float, N> &v1, const Vector<float, N> &v2);
-
     template <typename T, size_t N>
     Vector<T, N> operator-(const Vector<T, N> &v1, const Vector<T, N> &v2)
     {
@@ -141,9 +138,6 @@ namespace SingleNet
         return v;
     }
 
-    template <size_t N>
-    Vector<float, N> operator-(const Vector<float, N> &v1, const Vector<float, N> &v2);
-
     template <typename T, size_t N>
     Vector<T, N> &operator+=(Vector<T, N> &v1, const Vector<T, N> &v2)
     {
@@ -155,9 +149,6 @@ namespace SingleNet
             v1[i] += v2[i];
         return v1;
     }
-    
-    template <size_t N>
-    Vector<float, N> &operator+=(Vector<float, N> &v1, const Vector<float, N> &v2);
 
     template <typename T, size_t N>
     Vector<T, N> &operator-=(Vector<T, N> &v1, const Vector<T, N> &v2)
@@ -171,9 +162,6 @@ namespace SingleNet
         return v1;
     }
 
-    template <size_t N>
-    Vector<float, N> &operator-=(Vector<float, N> &v1, const Vector<float, N> &v2);
-
     template <typename T, size_t N>
     Vector<T, N> operator*(const Vector<T, N> &v1, const T &s)
     {
@@ -183,9 +171,6 @@ namespace SingleNet
 
         return v;
     }
-
-    template <size_t N>
-    Vector<float, N> operator*(const Vector<float, N> &v1, const float &s);
 
     template <typename T, size_t N>
     Vector<T, N> operator*(const T &s, const Vector<T, N> &v1)
@@ -202,9 +187,6 @@ namespace SingleNet
         return v1;
     }
 
-    template <size_t N>
-    Vector<float, N> &operator*=(Vector<float, N> &v1, const float &s);
-
     template <typename T, size_t N>
     Vector<T, N> operator/(const Vector<T, N> &v1, const T &s)
     {
@@ -215,9 +197,6 @@ namespace SingleNet
         return v;
     }
 
-    template <size_t N>
-    Vector<float, N> operator/(const Vector<float, N> &v1, const float &s);
-
     template <typename T, size_t N>
     Vector<T, N> &operator/=(Vector<T, N> &v1, const T &s)
     {
@@ -226,9 +205,6 @@ namespace SingleNet
 
         return v1;
     }
-
-    template <size_t N>
-    Vector<float, N> &operator/=(Vector<float, N> &v1, const float &s);
 
     template <typename T>
     Vector<T, 2> transpose(const Vector<T, 2> &v)
@@ -265,8 +241,6 @@ namespace SingleNet
         return sum;
     }
 
-    float dot(const Vector<float, 1> &v1, const Vector<float, 1> &v2);
-
     template <typename T>
     Vector<T, 1> dot(const Vector<T, 2> &v1, const Vector<T, 1> &v2)
     {
@@ -281,8 +255,6 @@ namespace SingleNet
 
         return res;
     }
-
-    Vector<float, 1> dot(const Vector<float, 2> &v1, const Vector<float, 1> &v2);
 
     template <typename T>
     Vector<T, 2> dot(const Vector<T, 2> &v1, const Vector<T, 2> &v2)
@@ -300,8 +272,6 @@ namespace SingleNet
 
         return v;
     }
-
-    Vector<float, 2> dot(const Vector<float, 2> &v1, const Vector<float, 2> &v2);
 
     template <typename T>
     T mean(const Vector<T, 1> &v)
@@ -389,6 +359,8 @@ namespace SingleNet
     }
 
 } // namespace SingleNet
+
+void CUDA_Init();
 
 template <typename T, size_t N>
 std::ostream &operator<<(std::ostream &os, const SingleNet::Vector<T, N> &v)

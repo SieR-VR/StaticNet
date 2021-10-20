@@ -1,13 +1,13 @@
 add_library(
-    Vector STATIC
-    Vector.cu
+    VectorCUDA STATIC
+    VectorCUDA.cu
 )
 
 set_target_properties(
-    Vector
+    VectorCUDA
     PROPERTIES
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
-    CUDA_ARCHITECTURES "52"
+    CUDA_ARCHITECTURES "75"
     CUDA_SEPARABLE_COMPILATION ON
     CXX_STANDARD 17
 )
