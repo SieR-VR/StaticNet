@@ -4,7 +4,7 @@
 #include <time.h>
 
 #include "Core/Datasets/Datasets.h"
-#include "Core/Defines/Defines.cuh"
+#include "Core/Defines/Defines.h"
 #include "Core/Layers.h"
 
 int main(int argc, char *argv[])
@@ -16,9 +16,9 @@ int main(int argc, char *argv[])
     Vector<float, 2> MNIST_Label = Datasets::MNIST::Label(
         "./Datasets/MNIST/train-labels.idx1-ubyte");
 
-    SequentialCUDA Model = SequentialCUDA({
-        LayerCUDA(new DenseCUDA(784, 100), new ActivationCUDA(Defines::ReLUCUDA, Defines::ReLUDerivativeCUDA)),
-        LayerCUDA(new DenseCUDA(100, 10), new SoftmaxCUDA())
+    Sequential Model = Sequential({
+        Layer(new Dense(784, 100), new Activation(Defines::ReLU, Defines::ReLUDerivative)),
+        Layer(new Dense(100, 10), new Softmax())
     }, Defines::CrossEntropy);
 
     for (int i = 0; i < 1000; i++)

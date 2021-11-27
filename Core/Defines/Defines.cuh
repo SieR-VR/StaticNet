@@ -1,46 +1,12 @@
-#ifndef DEFINES_H_
-#define DEFINES_H_
+#ifndef DEFINES_CUH_
+#define DEFINES_CUH_
 
-#include <functional>
-#include "Core/Vector/Vector.h"
+#include "Core/Vector/VectorCUDA.h"
 
 namespace SingleNet
 {
     namespace Defines
     {
-        // CPU Fuctions
-
-        // ------------------------------------------------------------
-        // Activation functions
-        // ------------------------------------------------------------
-
-        // Sigmoid function
-        extern std::function<float(float)> Sigmoid;
-        extern std::function<float(float)> SigmoidDerivative;
-        extern std::function<float(float)> SigmoidDerivative_;
-
-        // Tanh function
-        extern std::function<float(float)> Tanh;
-        extern std::function<float(float)> TanhDerivative;
-        extern std::function<float(float)> TanhDerivative_;
-
-        // ReLU function
-        extern std::function<float(float)> ReLU;
-        extern std::function<float(float)> ReLUDerivative;
-
-        // Softmax function
-        extern std::function<Vector<float, 1>(Vector<float, 1>)> Softmax;
-
-        // ------------------------------------------------------------
-        // Loss functions
-        // ------------------------------------------------------------
-
-        // Mean squared error
-        extern std::function<float(Vector<float, 1>, Vector<float, 1>)> MSE;
-
-        // Cross-entropy
-        extern std::function<float(Vector<float, 1>, Vector<float, 1>)> CrossEntropy;
-
         // GPU Functions
 
         // ------------------------------------------------------------
