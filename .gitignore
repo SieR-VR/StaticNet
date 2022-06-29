@@ -6,3 +6,6 @@ build/
 
 # Datasets
 Datasets/
+
+# Model Data
+weights_*

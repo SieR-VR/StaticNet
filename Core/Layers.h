@@ -7,8 +7,7 @@
 #include <vector>
 
 #include "Core/Vector/Vector.h"
-#include "Core/Vector/VectorCUDA.h"
-#include "Core/Defines/Defines.cuh"
+#include "Core/Defines/Defines.h"
 
 namespace SingleNet
 {
@@ -21,7 +20,7 @@ namespace SingleNet
     {
 
     public:
-        BaseNet(size_t inputSize, size_t outputSize)
+        BaseNet(int inputSize, int outputSize)
             : m_inputSize(inputSize),
               m_outputSize(outputSize),
               weights(outputSize, inputSize, T()),
@@ -32,10 +31,55 @@ namespace SingleNet
         virtual Vector<T, 2> Forward(const Vector<T, 2> &input) = 0;
         virtual Vector<T, 2> Backward(const Vector<T, 2> &nextDelta,
                                       const T &learningRate) = 0;
+        
+        std::vector<char> Serialize() {
+            std::vector<char> serialized;
+            for (int i = 0; i < sizeof(int); i++)
+                serialized.push_back(((char*)(&m_inputSize))[i]);
+            for (int i = 0; i < sizeof(int); i++)
+                serialized.push_back(((char*)(&m_outputSize))[i]);
+
+            for (int i = 0; i < m_outputSize; i++)
+                for (int j = 0; j < m_inputSize; j++)
+                    for (int k = 0; k < sizeof(T); k++)
+                        serialized.push_back(((char*)(&weights[i][j]))[k]);
+
+            for (int i = 0; i < m_outputSize; i++)
+                for (int j = 0; j < sizeof(T); j++)
+                    serialized.push_back(((char*)(&biases[i]))[j]);
+
+            return serialized;
+        }
+
+        void Deserialize(const std::vector<char> &serialized) {
+            m_inputSize = serialized[0] << 24 | serialized[1] << 16 | serialized[2] << 8 | serialized[3];
+            m_outputSize = serialized[4] << 24 | serialized[5] << 16 | serialized[6] << 8 | serialized[7];
+
+            int index = 8;
+
+            weights = Vector<T, 2>(m_outputSize, m_inputSize, T());
+            for (int i = 0; i < m_outputSize; i++)
+                for (int j = 0; j < m_inputSize; j++) {
+                    weights[i][j] = serialized[index] << 24 |
+                                    serialized[index + 1] << 16 |
+                                    serialized[index + 2] << 8 |
+                                    serialized[index + 3];
+                    index += 4;
+                }
+
+            biases = Vector<T, 1>(m_outputSize, T());
+            for (int i = 0; i < m_outputSize; i++) { 
+                biases[i] = serialized[index] << 24 |
+                            serialized[index + 1] << 16 |
+                            serialized[index + 2] << 8 |
+                            serialized[index + 3];
+                index += 4;
+            }
+        }
 
     protected:
-        size_t m_inputSize;
-        size_t m_outputSize;
+        int m_inputSize;
+        int m_outputSize;
 
         Vector<T, 2> weights;
         Vector<T, 1> biases;
@@ -53,39 +97,6 @@ namespace SingleNet
                                       const T &learningRate) = 0;
     };
 
-    // CUDA version
-
-    class BaseNetCUDA
-    {
-    public:
-        BaseNetCUDA(size_t inputSize, size_t outputSize)
-            : m_inputSize(inputSize),
-              m_outputSize(outputSize),
-              weights(Vector<float, 2>(outputSize, inputSize, 0.0f)),
-              biases(Vector<float, 1>(outputSize, 0.0f)) {}
-
-        virtual VectorCUDA<2> Forward(const VectorCUDA<2> &input) = 0;
-        virtual VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                                       const float &learningRate) = 0;
-
-    protected:
-        size_t m_inputSize;
-        size_t m_outputSize;
-
-        VectorCUDA<2> weights;
-        VectorCUDA<1> biases;
-    };
-
-    class BaseActivationCUDA
-    {
-    public:
-        BaseActivationCUDA() {}
-        virtual ~BaseActivationCUDA() {}
-        virtual VectorCUDA<2> Forward(const VectorCUDA<2> &input) = 0;
-        virtual VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                                       const float &learningRate) = 0;
-    };
-
     // ------------------------------------------------------------------------
     // implementation
     // ------------------------------------------------------------------------
@@ -100,18 +111,6 @@ namespace SingleNet
 
     private:
         Vector<float, 2> layerInput;
-    };
-
-    class DenseCUDA : public BaseNetCUDA
-    {
-    public:
-        DenseCUDA(size_t inputSize, size_t outputSize);
-
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input) override;
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate) override;
-    private:
-        VectorCUDA<2> layerInput;
     };
 
     class Activation : public BaseActivation<float>
@@ -131,23 +130,6 @@ namespace SingleNet
         Vector<float, 2> layerInput;
     };
 
-    class ActivationCUDA : public BaseActivationCUDA
-    {
-    public:
-        ActivationCUDA(float (*activation)(float),
-                       float (*activationDerivative)(float));
-
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input) override;
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate) override;
-
-    private:
-        float (*m_activation)(float);
-        float (*m_activationDerivative)(float);
-
-        VectorCUDA<2> layerInput;
-    };
-
     class Sigmoid : public BaseActivation<float>
     {
     public:
@@ -163,22 +145,6 @@ namespace SingleNet
         Vector<float, 2> layerOutput;
     };
 
-    class SigmoidCUDA : public BaseActivationCUDA
-    {
-    public:
-        SigmoidCUDA();
-
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input) override;
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate) override;
-
-    private:
-        float (*m_activation)(float);
-        float (*m_activationDerivative)(float);
-
-        VectorCUDA<2> layerOutput;
-    };
-
     class Softmax : public BaseActivation<float>
     {
     public:
@@ -187,19 +153,6 @@ namespace SingleNet
         Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
                                   const float &learningRate) override;
 
-    private:
-        std::function<Vector<float, 1>(Vector<float, 1>)> m_activation;
-    };
-
-    class SoftmaxCUDA : public BaseActivationCUDA
-    {
-    public:
-        SoftmaxCUDA();
-
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input) override;
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate) override;
-    
     private:
         std::function<Vector<float, 1>(Vector<float, 1>)> m_activation;
     };
@@ -222,25 +175,6 @@ namespace SingleNet
         Vector<float, 2> layerOutput;
     };
 
-    class SimpleRNNCUDA : public BaseActivationCUDA
-    {
-    public:
-        explicit SimpleRNNCUDA(size_t size);
-
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input) override;
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate) override;
-        
-    private:
-        float (*m_activation)(float);
-        float (*m_activationDerivative)(float);
-
-        size_t m_size;
-        DenseCUDA m_dense;
-
-        VectorCUDA<2> layerOutput;
-    };
-
     class Layer
     {
     public:
@@ -249,22 +183,9 @@ namespace SingleNet
         Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
                                   const float &learningRate);
 
-    private:
+    public:
         BaseNet<float> *m_net;
         BaseActivation<float> *m_activation;
-    };
-
-    class LayerCUDA
-    {
-    public:
-        LayerCUDA(BaseNetCUDA *net, BaseActivationCUDA *activation);
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input);
-        VectorCUDA<2> Backward(const VectorCUDA<2> &nextDelta,
-                               const float &learningRate);
-    
-    private:
-        BaseNetCUDA *m_net;
-        BaseActivationCUDA *m_activation;
     };
 
     class Sequential
@@ -281,25 +202,8 @@ namespace SingleNet
         void Backward(const Vector<float, 2> &output, const float &learningRate);
         float Loss(const Vector<float, 2> &output, const Vector<float, 2> &expected);
 
-        std::vector<Layer> m_layers;
-        std::function<float(Vector<float, 1>, Vector<float, 1>)> m_lossFunction;
-    };
-
-    class SequentialCUDA
-    {
     public:
-        SequentialCUDA(const std::initializer_list<LayerCUDA> &layers,
-                       const std::function<float(Vector<float, 1>, Vector<float, 1>)> &lossFunction);
-        float Train(const VectorCUDA<2> &input, const VectorCUDA<2> &output,
-                    const float &learningRate);
-        Vector<float, 1> Predict(const Vector<float, 1> &input);
-
-    private:
-        VectorCUDA<2> Forward(const VectorCUDA<2> &input);
-        void Backward(const VectorCUDA<2> &output, const float &learningRate);
-        float Loss(const Vector<float, 2> &output, const Vector<float, 2> &expected);
-
-        std::vector<LayerCUDA> m_layers;
+        std::vector<Layer> m_layers;
         std::function<float(Vector<float, 1>, Vector<float, 1>)> m_lossFunction;
     };
 }; // namespace SingleNet

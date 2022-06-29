@@ -284,7 +284,7 @@ namespace SingleNet
         {
             Vector<float, 2> delta = nextDelta;
             for (int layerIndex = m_layers.size() - 1; layerIndex >= 0; layerIndex--)
-                delta = m_layers[layerIndex].Backward(nextDelta, learningRate);
+                delta = m_layers[layerIndex].Backward(delta, learningRate);
         }
         catch (const std::exception &e)
         {

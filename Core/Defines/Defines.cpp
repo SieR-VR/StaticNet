@@ -1,5 +1,5 @@
 #include <cmath>
-#include "Core/Defines/Defines.cuh"
+#include "Core/Defines/Defines.h"
 
 namespace SingleNet
 {
@@ -30,6 +30,11 @@ namespace SingleNet
         { return x > 0.0f ? x : 0.0f; };
         std::function<float(float)> ReLUDerivative = [](float x)
         { return x > 0.0f ? 1.0f : 0.0f; };
+
+        std::function<float(float)> Lnh = [](float x)
+        { return x > 0.0f ? log(x+1) : -log(-x+1); };
+        std::function<float(float)> LnhDerivative = [](float x)
+        { return x > 0.0f ? 1.f / (x + 1) : 1.f / (-x+1); };
 
         // Softmax function
         std::function<Vector<float, 1>(Vector<float, 1>)> Softmax = [](Vector<float, 1> x)

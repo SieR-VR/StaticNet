@@ -28,6 +28,10 @@ namespace SingleNet
         extern std::function<float(float)> ReLU;
         extern std::function<float(float)> ReLUDerivative;
 
+        // Lnh function
+        extern std::function<float(float)> Lnh;
+        extern std::function<float(float)> LnhDerivative;
+
         // Softmax function
         extern std::function<Vector<float, 1>(Vector<float, 1>)> Softmax;
 

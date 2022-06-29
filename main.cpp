@@ -12,12 +12,12 @@ int main(int argc, char *argv[])
     using namespace SingleNet;
 
     Vector<float, 2> MNIST_Image = Datasets::MNIST::Image(
-        "./Datasets/MNIST/train-images.idx3-ubyte");
+        "./Datasets/MNIST/train-images-idx3-ubyte");
     Vector<float, 2> MNIST_Label = Datasets::MNIST::Label(
-        "./Datasets/MNIST/train-labels.idx1-ubyte");
+        "./Datasets/MNIST/train-labels-idx1-ubyte");
 
     Sequential Model = Sequential({
-        Layer(new Dense(784, 100), new Activation(Defines::ReLU, Defines::ReLUDerivative)),
+        Layer(new Dense(784, 100), new Activation(Defines::Lnh, Defines::LnhDerivative)),
         Layer(new Dense(100, 10), new Softmax())
     }, Defines::CrossEntropy);
 
@@ -34,9 +34,9 @@ int main(int argc, char *argv[])
     }
 
     Vector<float, 2> testImage = Datasets::MNIST::Image(
-        "./Datasets/MNIST/t10k-images.idx3-ubyte");
+        "./Datasets/MNIST/t10k-images-idx3-ubyte");
     Vector<float, 2> testLabel = Datasets::MNIST::Label(
-        "./Datasets/MNIST/t10k-labels.idx1-ubyte");
+        "./Datasets/MNIST/t10k-labels-idx1-ubyte");
 
     int correct = 0;
 
@@ -50,8 +50,11 @@ int main(int argc, char *argv[])
 
         if (Label[maxIndex_] == 1)
             correct++;
+
+        if (i % 100 == 0)
+            std::cout << correct << std::endl; 
     }
 
-    std::cout << "Accuracy: " << static_cast<float>(correct / 10000)
+    std::cout << "Accuracy: " << static_cast<float>(correct / 10000.f)
               << std::endl;
 }
