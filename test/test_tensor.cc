@@ -2,12 +2,14 @@
 #include "Tensor.h"
 
 int main() {
-    auto t = SingleNet::Tensor<float, 4, 4>({
+    SingleNet::Tensor<float, 4, 4> t1 = {
         { 1, 2, 3, 4 },
         { 5, 6, 7, 8 },
         { 9, 10, 11, 12 },
         { 13, 14, 15, 16 },
-    });
+    };
 
-    std::cout << t;
+    auto t2 = t1;
+
+    std::cout << SingleNet::dot(t1, t2); 
 }
