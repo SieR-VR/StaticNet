@@ -32,18 +32,21 @@ namespace SingleNet
         return mnist_images;
     }
 
-    template <size_t Batch>
-    std::vector<Tensor<size_t, Batch>> Label(std::string full_path)
+    template <size_t Batch, size_t LabelSize>
+    std::vector<Tensor<bool, Batch, LabelSize>> Label(std::string full_path)
     {
         int label_num;
         auto raw_labels = read_mnist_labels(full_path, label_num);
 
-        std::vector<Tensor<int, Batch>> mnist_labels;
+        std::vector<Tensor<bool, Batch, LabelSize>> mnist_labels;
         for (int i = 0; i < label_num / Batch; i++)
         {
-            Tensor<float, Batch> temp;
+            Tensor<bool, Batch, LabelSize> temp(false);
             for (int j = 0; j < Batch; j++)
-                temp[j] = raw_labels[i * Batch + j];
+            {
+                for (int k = 0; k < LabelSize; k++)
+                    temp[j][k] = raw_labels[i * Batch + j] == k;
+            }
             mnist_labels.push_back(temp);
         }
 
