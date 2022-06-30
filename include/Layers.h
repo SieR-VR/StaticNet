@@ -101,7 +101,7 @@ namespace SingleNet
         std::function<float(float)> m_activation;
         std::function<float(float)> m_activationDerivative;
 
-        Tensor<float, Batch, Input> layerInput;
+      1  Tensor<float, Batch, Input> layerInput;
     };
 
     template <size_t Input, size_t Batch>
