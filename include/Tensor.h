@@ -82,8 +82,9 @@ namespace SingleNet
 
     public:
         virtual SubRef operator[](size_t i) = 0;
+        virtual const SubRef operator[](size_t i) const = 0;
 
-        bool operator==(This &other)
+        bool operator==(const This &other) const
         {
             for (size_t i = 0; i < D; i++)
                 if (!((*this)[i] == other[i]))
@@ -92,7 +93,7 @@ namespace SingleNet
             return true;
         }
 
-        bool operator==(ThisRef other)
+        bool operator==(const ThisRef other) const
         {
             for (size_t i = 0; i < D; i++)
                 if (!((*this)[i] == other[i]))
@@ -101,7 +102,7 @@ namespace SingleNet
             return true;
         }
 
-        bool operator!=(This &other)
+        bool operator!=(const This &other) const
         {
             for (size_t i = 0; i < D; i++)
                 if (!((*this)[i] != other[i]))
@@ -110,7 +111,7 @@ namespace SingleNet
             return true;
         }
 
-        bool operator!=(ThisRef other)
+        bool operator!=(const ThisRef other) const
         {
             for (size_t i = 0; i < D; i++)
                 if (!((*this)[i] != other[i]))
@@ -119,7 +120,8 @@ namespace SingleNet
             return true;
         }
 
-        This operator+(This &other)
+        template <class U, size_t... Dims>
+        This operator+(const Tensor<U, Dims...> &other) const
         {
             This result;
 
@@ -129,7 +131,8 @@ namespace SingleNet
             return result;
         }
 
-        This operator+(ThisRef other)
+        template <class U, size_t... Dims>
+        This operator+(const TensorRef<U, Dims...> other) const
         {
             This result;
 
@@ -139,7 +142,8 @@ namespace SingleNet
             return result;
         }
 
-        SymbolicThis &operator+=(This &other)
+        template <class U, size_t... Dims>
+        auto &operator+=(const Tensor<U, Dims...> &other)
         {
             for (size_t i = 0; i < D; i++)
                 (this->operator[](i)) += other[i];
@@ -147,7 +151,8 @@ namespace SingleNet
             return (*this);
         }
 
-        auto &operator+=(ThisRef other)
+        template <class U, size_t... Dims>
+        auto &operator+=(const TensorRef<U, Dims...> other)
         {
             for (size_t i = 0; i < D; i++)
                 (this->operator[](i)) += other[i];
@@ -155,7 +160,8 @@ namespace SingleNet
             return *this;
         }
 
-        This operator-(This &other)
+        template <class U, size_t... Dims>
+        This operator-(const Tensor<U, Dims...> &other) const
         {
             This result;
 
@@ -165,7 +171,8 @@ namespace SingleNet
             return result;
         }
 
-        This operator-(ThisRef other)
+        template <class U, size_t... Dims>
+        This operator-(const TensorRef<U, Dims...> other) const
         {
             This result;
 
@@ -175,7 +182,8 @@ namespace SingleNet
             return result;
         }
 
-        auto &operator-=(const This &other)
+        template <class U, size_t... Dims>
+        auto &operator-=(const Tensor<U, Dims...> &other)
         {
             for (size_t i = 0; i < D; i++)
                 (this->operator[](i)) -= other[i];
@@ -183,7 +191,8 @@ namespace SingleNet
             return (*this);
         }
 
-        auto &operator-=(const ThisRef other)
+        template <class U, size_t... Dims>
+        auto &operator-=(const TensorRef<U, Dims...> other)
         {
             for (size_t i = 0; i < D; i++)
                 (this->operator[](i)) -= other[i];
@@ -191,7 +200,8 @@ namespace SingleNet
             return (*this);
         }
 
-        This operator*(T scalar)
+        template <class U>
+        This operator*(U scalar) const
         {
             This result;
 
@@ -201,7 +211,8 @@ namespace SingleNet
             return result;
         }
 
-        This &operator*=(T scalar)
+        template <class U>
+        This &operator*=(U scalar)
         {
             for (size_t i = 0; i < D; i++)
                 (*this[i]) *= scalar;
@@ -209,7 +220,8 @@ namespace SingleNet
             return (*this);
         }
 
-        This operator/(T scalar)
+        template <class U>
+        This operator/(U scalar) const
         {
             This result;
 
@@ -219,7 +231,8 @@ namespace SingleNet
             return result;
         }
 
-        This &operator/=(T scalar)
+        template <class U>
+        This &operator/=(U scalar)
         {
             for (size_t i = 0; i < D; i++)
                 (*this[i]) /= scalar;
@@ -227,8 +240,18 @@ namespace SingleNet
             return (*this);
         }
 
+        This operator-() const
+        {
+            This result;
+
+            for (size_t i = 0; i < D; i++)
+                result[i] = -(*this)[i];
+
+            return result;
+        }
+
         template <class Other>
-        Tensor<Other, D, D_...> map(const std::function<Other(T)> &f)
+        Tensor<Other, D, D_...> map(const std::function<Other(T)> &f) const
         {
             if constexpr (sizeof...(D_))
             {
@@ -249,7 +272,7 @@ namespace SingleNet
         }
 
         template <class Other, size_t FD>
-        TensorUtils::cond_apply<Other, sizeof...(D_), FD, D, D_...>::type apply(const std::function<Tensor<Other, FD>(Tensor<T, FD>)> &f)
+        TensorUtils::cond_apply<Other, sizeof...(D_), FD, D, D_...>::type apply(const std::function<Tensor<Other, FD>(Tensor<T, FD>)> &f) const
         {
             if constexpr (sizeof...(D_) > 0)
             {
@@ -261,10 +284,17 @@ namespace SingleNet
             }
             else
             {
-                Tensor<T, FD> deref = (*this);
-                Tensor<Other, FD> result = f(deref);
+                Tensor<Other, FD> result = f(Tensor<T, FD>(*this));
                 return result;
             }
+        }
+
+        T sum() const
+        {
+            T result = 0;
+            for (size_t i = 0; i < D; i++)
+                result += (*this)[i];
+            return result;
         }
 
     public:
@@ -285,7 +315,7 @@ namespace SingleNet
         using SubRef = typename TensorUtils::sub_cond_ref<T, sizeof...(D_), D_...>::type;
 
     public:
-        Tensor(SymbolicTensor<T, D, D_...> &symbolic)
+        Tensor(const SymbolicTensor<T, D, D_...> &symbolic)
             : begin_iter(data), end_iter(data + this->size)
         {
         }
@@ -399,6 +429,14 @@ namespace SingleNet
                 return SubRef(data_start + i * TensorUtils::get_size<D_...>());
             else
                 return data_start[i];
+        }
+
+        This deref() const
+        {
+            This result;
+            for (size_t i = 0; i < this->size; i++)
+                result[i] = data_start[i];
+            return result;
         }
 
     private:

@@ -21,11 +21,11 @@ namespace SingleNet
         BaseNet() {}
         ~BaseNet() {}
 
-        virtual Tensor<T, Batch, Output> Forward(Tensor<T, Batch, Input> &input) = 0;
-        virtual Tensor<T, Batch, Input> Backward(Tensor<T, Batch, Output> &nextDelta,
-                                                 T &learningRate) = 0;
+        virtual Tensor<T, Batch, Output> Forward(const Tensor<T, Batch, Input> &input) = 0;
+        virtual Tensor<T, Batch, Input> Backward(const Tensor<T, Batch, Output> &nextDelta,
+                                                 T learningRate) = 0;
 
-        Tensor<T, Batch, Output> operator()(Tensor<T, Batch, Input> &input)
+        Tensor<T, Batch, Output> operator()(const Tensor<T, Batch, Input> &input)
         {
             return Forward(input);
         }
@@ -42,9 +42,14 @@ namespace SingleNet
     public:
         BaseActivation() {}
         virtual ~BaseActivation() {}
-        virtual Tensor<T, Batch, Input> Forward(Tensor<T, Batch, Input> &input) = 0;
-        virtual Tensor<T, Batch, Input> Backward(Tensor<T, Batch, Input> &nextDelta,
-                                                 T &learningRate) = 0;
+        virtual Tensor<T, Batch, Input> Forward(const Tensor<T, Batch, Input> &input) = 0;
+        virtual Tensor<T, Batch, Input> Backward(const Tensor<T, Batch, Input> &nextDelta,
+                                                 T learningRate) = 0;
+
+        Tensor<T, Batch, Input> operator()(const Tensor<T, Batch, Input> &input)
+        {
+            return Forward(input);
+        }
     };
 
     // ------------------------------------------------------------------------
@@ -56,7 +61,7 @@ namespace SingleNet
     {
     public:
         Dense() {}
-        Tensor<float, Batch, Output> Forward(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Output> Forward(const Tensor<float, Batch, Input> &input)
         {
             layerInput = input;
             Tensor<float, Batch, Output> result = dot(input, this->weights);
@@ -66,8 +71,8 @@ namespace SingleNet
             return result;
         }
 
-        Tensor<float, Batch, Input> Backward(Tensor<float, Batch, Output> &nextDelta,
-                                             float &learningRate)
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Output> &nextDelta,
+                                             float learningRate)
         {
             Tensor<float, Batch, Input> delta = dot(nextDelta, get_transposed(this->weights));
             this->weights -= dot(get_transposed(layerInput), nextDelta) / (float)Batch;
@@ -96,13 +101,13 @@ namespace SingleNet
                    const std::function<float(float)> &activationDerivative)
             : m_activation(activation), m_activationDerivative(activationDerivative) {}
 
-        Tensor<float, Batch, Input> Forward(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input)
         {
             layerInput = input;
             return input.map(m_activation);
         }
-        Tensor<float, Batch, Input> Backward(Tensor<float, Batch, Input> &nextDelta,
-                                             float &learningRate)
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             float learningRate)
         {
             return conv(nextDelta, layerInput.map(m_activationDerivative));
         }
@@ -120,13 +125,13 @@ namespace SingleNet
     public:
         Sigmoid() : m_activation(Defines::Sigmoid), m_activationDerivative(Defines::SigmoidDerivative_) {}
 
-        Tensor<float, Batch, Input> Forward(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input)
         {
             layerOutput = input.map(m_activation);
             return layerOutput;
         }
-        Tensor<float, Batch, Input> Backward(Tensor<float, Batch, Input> &nextDelta,
-                                             float &learningRate)
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             float learningRate)
         {
             return conv(nextDelta, layerOutput.map(m_activationDerivative));
         }
@@ -143,13 +148,13 @@ namespace SingleNet
     {
     public:
         Softmax() : m_activation(Defines::Softmax<Input>) {}
-        Tensor<float, Batch, Input> Forward(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input)
         {
             return input.apply(m_activation);
         }
 
-        Tensor<float, Batch, Input> Backward(Tensor<float, Batch, Input> &nextDelta,
-                                             float &learningRate)
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             float learningRate)
         {
             return nextDelta;
         }
@@ -165,18 +170,18 @@ namespace SingleNet
         Layer(BaseNet<float, Input, Output, Batch> *net, BaseActivation<float, Output, Batch> *activation)
             : m_net(net), m_activation(activation) {}
 
-        Tensor<float, Batch, Output> Forward(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Output> Forward(const Tensor<float, Batch, Input> &input)
         {
             return (*m_activation)((*m_net)(input));
         }
 
-        Tensor<float, Batch, Input> Backward(Tensor<float, Batch, Output> &nextDelta,
-                                             float &learningRate)
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Output> &nextDelta,
+                                             float learningRate)
         {
             return m_net->Backward(m_activation->Backward(nextDelta, learningRate), learningRate);
         }
 
-        Tensor<float, Batch, Output> operator()(Tensor<float, Batch, Input> &input)
+        Tensor<float, Batch, Output> operator()(const Tensor<float, Batch, Input> &input)
         {
             return Forward(input);
         }

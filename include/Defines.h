@@ -78,7 +78,7 @@ namespace SingleNet
 
         // Cross-entropy
         template <size_t Input>
-        std::function<float(Tensor<float, Input>, Tensor<float, Input>)> CrossEntropy = [](Tensor<bool, Input> y, Tensor<float, Input> y_)
+        std::function<float(Tensor<bool, Input>, Tensor<float, Input>)> CrossEntropy = [](Tensor<bool, Input> y, Tensor<float, Input> y_)
         {
             float sum = 0.0f;
 
