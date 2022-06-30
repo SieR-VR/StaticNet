@@ -1,5 +1,5 @@
 #include <cmath>
-#include "Core/Defines/Defines.h"
+#include "Defines.h"
 
 namespace SingleNet
 {

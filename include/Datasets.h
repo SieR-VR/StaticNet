@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "Core/Vector/Vector.h"
+#include "Vector.h"
 
 namespace SingleNet
 {

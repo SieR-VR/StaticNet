@@ -1,7 +1,7 @@
 #include <random>
 
-#include "Core/Defines/Defines.h"
-#include "Core/Layers.h"
+#include "Defines.h"
+#include "Layers.h"
 
 namespace SingleNet
 {

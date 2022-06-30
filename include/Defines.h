@@ -2,7 +2,7 @@
 #define DEFINES_H_
 
 #include <functional>
-#include "Core/Vector/Vector.h"
+#include "Vector.h"
 
 namespace SingleNet
 {

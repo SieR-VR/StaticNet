@@ -6,8 +6,8 @@
 #include <functional>
 #include <vector>
 
-#include "Core/Vector/Vector.h"
-#include "Core/Defines/Defines.h"
+#include "Vector.h"
+#include "Defines.h"
 
 namespace SingleNet
 {

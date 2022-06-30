@@ -2,7 +2,7 @@
 #include <random>
 #include <algorithm>
 
-#include "Core/Datasets/Datasets.h"
+#include "Datasets.h"
 
 std::vector<unsigned char *> SingleNet::Datasets::MNIST::Raw::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
 {
