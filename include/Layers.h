@@ -18,7 +18,18 @@ namespace SingleNet
     class BaseNet
     {
     public:
-        BaseNet() {}
+        BaseNet() {
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<> dis(-1.0f, 1.0f);
+
+            for (size_t i = 0; i < Input; i++)
+                for (size_t j = 0; j < Output; j++)
+                    weights[i][j] = dis(gen);
+            
+            for (size_t i = 0; i < Output; i++)
+                biases[i] = dis(gen);
+        }
         ~BaseNet() {}
 
         virtual Tensor<T, Batch, Output> Forward(const Tensor<T, Batch, Input> &input) = 0;
@@ -75,16 +86,13 @@ namespace SingleNet
                                              float learningRate)
         {
             Tensor<float, Batch, Input> delta = dot(nextDelta, get_transposed(this->weights));
-            this->weights -= dot(get_transposed(layerInput), nextDelta) / (float)Batch;
+            this->weights -= dot(get_transposed(layerInput), nextDelta) / (float)Batch * learningRate;
             this->biases -= ([](Tensor<float, Batch, Output> delta) {
                 Tensor<float, Output> result(0.0f);
-                for (size_t i = 0; i < Output; i++)
-                    result[i] = 0;
-
                 for (size_t i = 0; i < Batch; i++)
                     result += delta[i];
                 return (result / (float)Batch); 
-            })(nextDelta);
+            })(nextDelta) * learningRate;
 
             return delta;
         }

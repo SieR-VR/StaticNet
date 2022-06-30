@@ -66,6 +66,17 @@ namespace SingleNet
         {
             typedef Tensor<T, FD> type;
         };
+
+        template <typename>
+        struct is_tensor : std::false_type
+        { };
+
+        template <class T, size_t... Dims>
+        struct is_tensor<Tensor<T, Dims...>> : std::true_type
+        { };
+        
+        template <typename T>
+        constexpr bool is_tensor_v = is_tensor<T>::value;
     }
 
     template <class T, size_t D, size_t... D_>
@@ -186,7 +197,7 @@ namespace SingleNet
         auto &operator-=(const Tensor<U, Dims...> &other)
         {
             for (size_t i = 0; i < D; i++)
-                (this->operator[](i)) -= other[i];
+                (*this)[i] -= other[i];
 
             return (*this);
         }
@@ -195,7 +206,7 @@ namespace SingleNet
         auto &operator-=(const TensorRef<U, Dims...> other)
         {
             for (size_t i = 0; i < D; i++)
-                (this->operator[](i)) -= other[i];
+                (*this)[i] -= other[i];
 
             return (*this);
         }
@@ -318,6 +329,8 @@ namespace SingleNet
         Tensor(const SymbolicTensor<T, D, D_...> &symbolic)
             : begin_iter(data), end_iter(data + this->size)
         {
+            for (size_t i = 0; i < this->size; i++)
+                data[i] = symbolic[i];
         }
 
         Tensor(const T &value = T())
@@ -400,17 +413,17 @@ namespace SingleNet
         using SubRef = typename TensorUtils::sub_cond_ref<T, sizeof...(D_), D_...>::type;
 
     public:
-        TensorRef(This &origin) : data_start(origin.data), begin_iter(data_start), end_iter(data_start + this->size) {}
-        TensorRef(T *const data_start) : data_start(data_start), begin_iter(data_start), end_iter(data_start + this->size) {}
+        TensorRef(This &origin) : data(origin.data), begin_iter(data), end_iter(data + this->size) {}
+        TensorRef(T *const data_start) : data(data_start), begin_iter(data_start), end_iter(data_start + this->size) {}
         TensorRef(const T *data_start)
-            : data_start(const_cast<T *>(data_start)), 
+            : data(const_cast<T *>(data_start)), 
               begin_iter(const_cast<T *>(data_start)), 
               end_iter(const_cast<T *>(data_start) + this->size) {}
 
         ThisRef &operator=(const This &origin)
         {
             for (int i = 0; i < this->size; i++)
-                data_start[i] = origin.data[i];
+                data[i] = origin.data[i];
 
             return *this;
         }
@@ -418,29 +431,29 @@ namespace SingleNet
         SubRef operator[](size_t i)
         {
             if constexpr (sizeof...(D_))
-                return SubRef(data_start + i * TensorUtils::get_size<D_...>());
+                return SubRef(data + i * TensorUtils::get_size<D_...>());
             else
-                return data_start[i];
+                return data[i];
         }
 
         const SubRef operator[](size_t i) const
         {
             if constexpr (sizeof...(D_))
-                return SubRef(data_start + i * TensorUtils::get_size<D_...>());
+                return SubRef(data + i * TensorUtils::get_size<D_...>());
             else
-                return data_start[i];
+                return data[i];
         }
 
         This deref() const
         {
             This result;
             for (size_t i = 0; i < this->size; i++)
-                result[i] = data_start[i];
+                result[i] = data[i];
             return result;
         }
 
     private:
-        T *const data_start;
+        T *const data;
 
     public:
         T *const begin_iter;
@@ -492,7 +505,23 @@ namespace SingleNet
     }
 
     template <typename T, size_t D>
-    size_t argmax(Tensor<T, D> &t)
+    size_t argmax(const Tensor<T, D> &t)
+    {
+        T max = std::numeric_limits<T>::lowest();
+        size_t max_idx = -1;
+
+        for (size_t i = 0; i < D; i++)
+            if (t[i] > max)
+            {
+                max = t[i];
+                max_idx = i;
+            }
+
+        return max_idx;
+    }
+
+    template <typename T, size_t D>
+    size_t argmax(const TensorRef<T, D> &t)
     {
         T max = std::numeric_limits<T>::lowest();
         size_t max_idx = -1;

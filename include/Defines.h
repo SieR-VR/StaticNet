@@ -16,7 +16,7 @@ namespace SingleNet
 
         // Sigmoid function
         std::function<float(float)> Sigmoid = [](float x)
-        { return 1.0f / (1.0f + std::expf(-x)); };
+        { return 1.0f / (1.0f + std::exp(-x)); };
         std::function<float(float)> SigmoidDerivative = [](float x)
         { return Sigmoid(x) * (1.0f - Sigmoid(x)); };
         std::function<float(float)> SigmoidDerivative_ = [](float x)
@@ -24,9 +24,9 @@ namespace SingleNet
 
         // Tanh function
         std::function<float(float)> Tanh = [](float x)
-        { return std::tanhf(x); };
+        { return std::tanh(x); };
         std::function<float(float)> TanhDerivative = [](float x)
-        { return 1.0f - std::powf(Tanh(x), 2); };
+        { return 1.0f - std::pow(Tanh(x), 2); };
         std::function<float(float)> TanhDerivative_ = [](float x)
         { return 1.0f - x * x; };
 
@@ -37,7 +37,7 @@ namespace SingleNet
         { return x > 0.0f ? 1.0f : 0.0f; };
 
         std::function<float(float)> Lnh = [](float x)
-        { return x > 0.0f ? logf(x+1.f) : -logf(-x+1.f); };
+        { return x > 0.0f ? log(x+1.f) : -log(-x+1.f); };
         std::function<float(float)> LnhDerivative = [](float x)
         { return x > 0.0f ? 1.f / (x + 1.f) : 1.f / (-x+1.f); };
 
@@ -50,7 +50,7 @@ namespace SingleNet
 
             for (size_t i = 0; i < Input; i++)
             {
-                x[i] = std::expf(x[i] - max);
+                x[i] = std::exp(x[i] - max);
                 sum += x[i];
             }
 
@@ -83,7 +83,7 @@ namespace SingleNet
             float sum = 0.0f;
 
             for (size_t i = 0; i < Input; i++)
-                if(y[i]) sum -= std::logf(y_[i]);
+                if(y[i]) sum -= std::log(y_[i]);
 
             return sum;
         };
