@@ -2,48 +2,91 @@
 #define DEFINES_H_
 
 #include <functional>
-#include "Vector.h"
+#include <cmath>
+
+#include "Tensor.h"
 
 namespace SingleNet
 {
     namespace Defines
     {
-        // CPU Fuctions
-
         // ------------------------------------------------------------
         // Activation functions
         // ------------------------------------------------------------
 
         // Sigmoid function
-        extern std::function<float(float)> Sigmoid;
-        extern std::function<float(float)> SigmoidDerivative;
-        extern std::function<float(float)> SigmoidDerivative_;
+        std::function<float(float)> Sigmoid = [](float x)
+        { return 1.0f / (1.0f + std::exp(-x)); };
+        std::function<float(float)> SigmoidDerivative = [](float x)
+        { return Sigmoid(x) * (1.0f - Sigmoid(x)); };
+        std::function<float(float)> SigmoidDerivative_ = [](float x)
+        { return x * (1.0f - x); };
 
         // Tanh function
-        extern std::function<float(float)> Tanh;
-        extern std::function<float(float)> TanhDerivative;
-        extern std::function<float(float)> TanhDerivative_;
+        std::function<float(float)> Tanh = [](float x)
+        { return std::tanh(x); };
+        std::function<float(float)> TanhDerivative = [](float x)
+        { return 1.0f - std::pow(Tanh(x), 2); };
+        std::function<float(float)> TanhDerivative_ = [](float x)
+        { return 1.0f - x * x; };
 
         // ReLU function
-        extern std::function<float(float)> ReLU;
-        extern std::function<float(float)> ReLUDerivative;
+        std::function<float(float)> ReLU = [](float x)
+        { return x > 0.0f ? x : 0.0f; };
+        std::function<float(float)> ReLUDerivative = [](float x)
+        { return x > 0.0f ? 1.0f : 0.0f; };
 
-        // Lnh function
-        extern std::function<float(float)> Lnh;
-        extern std::function<float(float)> LnhDerivative;
+        std::function<float(float)> Lnh = [](float x)
+        { return x > 0.0f ? log(x+1) : -log(-x+1); };
+        std::function<float(float)> LnhDerivative = [](float x)
+        { return x > 0.0f ? 1.f / (x + 1) : 1.f / (-x+1); };
 
         // Softmax function
-        extern std::function<Vector<float, 1>(Vector<float, 1>)> Softmax;
+        template <size_t Input>
+        std::function<Tensor<float, Input>(Tensor<float, Input>)> Softmax = [](Tensor<float, Input> x)
+        {
+            float max = x[argmax(x)];
+            float sum = 0.0f;
+
+            for (size_t i = 0; i < Input; i++)
+            {
+                x[i] = std::exp(x[i] - max);
+                sum += x[i];
+            }
+
+            for (size_t i = 0; i < Input; i++)
+                x[i] /= sum;
+
+            return x;
+        };
 
         // ------------------------------------------------------------
         // Loss functions
         // ------------------------------------------------------------
 
         // Mean squared error
-        extern std::function<float(Vector<float, 1>, Vector<float, 1>)> MSE;
+        template <size_t Input>
+        std::function<float(Tensor<float, Input>, Tensor<float, Input>)> MeanSquared = [](Tensor<float, Input> y, Tensor<float, Input> y_)
+        {
+            float sum = 0.0f;
+
+            for (size_t i = 0; i < Input; i++)
+                sum += std::pow(y[i] - y_[i], 2);
+
+            return sum / Input;
+        };
 
         // Cross-entropy
-        extern std::function<float(Vector<float, 1>, Vector<float, 1>)> CrossEntropy;
+        template <size_t Input>
+        std::function<float(Tensor<float, Input>, Tensor<float, Input>)> CrossEntropy = [](Tensor<float, Input> y, Tensor<float, Input> y_)
+        {
+            float sum = 0.0f;
+
+            for (size_t i = 0; i < Input; i++)
+                if(y[i]) sum -= std::log(y_[i]);
+
+            return sum;
+        };
     }
 }
 

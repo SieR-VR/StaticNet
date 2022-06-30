@@ -4,9 +4,8 @@
 #define FLOAT_LAYERS_H_
 
 #include <functional>
-#include <vector>
 
-#include "Vector.h"
+#include "Tensor.h"
 #include "Defines.h"
 
 namespace SingleNet
@@ -15,196 +14,123 @@ namespace SingleNet
     // Base class for layers
     // ------------------------------------------------------------------------
 
-    template <typename T>
+    template <typename T, size_t Input, size_t Output, size_t Batch>
     class BaseNet
     {
-
     public:
-        BaseNet(int inputSize, int outputSize)
-            : m_inputSize(inputSize),
-              m_outputSize(outputSize),
-              weights(outputSize, inputSize, T()),
-              biases(outputSize, T()) {}
+        BaseNet() {}
+        ~BaseNet() {}
 
-        virtual ~BaseNet() {}
+        virtual Tensor<T, Batch, Output> Forward(const Tensor<T, Batch, Input> &input) = 0;
+        virtual Tensor<T, Batch, Input> Backward(const Tensor<T, Batch, Output> &nextDelta,
+                                                 const T &learningRate) = 0;
 
-        virtual Vector<T, 2> Forward(const Vector<T, 2> &input) = 0;
-        virtual Vector<T, 2> Backward(const Vector<T, 2> &nextDelta,
-                                      const T &learningRate) = 0;
-        
-        std::vector<char> Serialize() {
-            std::vector<char> serialized;
-            for (int i = 0; i < sizeof(int); i++)
-                serialized.push_back(((char*)(&m_inputSize))[i]);
-            for (int i = 0; i < sizeof(int); i++)
-                serialized.push_back(((char*)(&m_outputSize))[i]);
-
-            for (int i = 0; i < m_outputSize; i++)
-                for (int j = 0; j < m_inputSize; j++)
-                    for (int k = 0; k < sizeof(T); k++)
-                        serialized.push_back(((char*)(&weights[i][j]))[k]);
-
-            for (int i = 0; i < m_outputSize; i++)
-                for (int j = 0; j < sizeof(T); j++)
-                    serialized.push_back(((char*)(&biases[i]))[j]);
-
-            return serialized;
-        }
-
-        void Deserialize(const std::vector<char> &serialized) {
-            m_inputSize = serialized[0] << 24 | serialized[1] << 16 | serialized[2] << 8 | serialized[3];
-            m_outputSize = serialized[4] << 24 | serialized[5] << 16 | serialized[6] << 8 | serialized[7];
-
-            int index = 8;
-
-            weights = Vector<T, 2>(m_outputSize, m_inputSize, T());
-            for (int i = 0; i < m_outputSize; i++)
-                for (int j = 0; j < m_inputSize; j++) {
-                    weights[i][j] = serialized[index] << 24 |
-                                    serialized[index + 1] << 16 |
-                                    serialized[index + 2] << 8 |
-                                    serialized[index + 3];
-                    index += 4;
-                }
-
-            biases = Vector<T, 1>(m_outputSize, T());
-            for (int i = 0; i < m_outputSize; i++) { 
-                biases[i] = serialized[index] << 24 |
-                            serialized[index + 1] << 16 |
-                            serialized[index + 2] << 8 |
-                            serialized[index + 3];
-                index += 4;
-            }
-        }
-
-    protected:
-        int m_inputSize;
-        int m_outputSize;
-
-        Vector<T, 2> weights;
-        Vector<T, 1> biases;
+    private:
+        Tensor<T, Input, Output> weights;
+        Tensor<T, Output> biases;
     };
 
-    template <typename T>
+    template <typename T, size_t Input, size_t Batch>
     class BaseActivation
     {
 
     public:
         BaseActivation() {}
         virtual ~BaseActivation() {}
-        virtual Vector<T, 2> Forward(const Vector<T, 2> &input) = 0;
-        virtual Vector<T, 2> Backward(const Vector<T, 2> &nextDelta,
-                                      const T &learningRate) = 0;
+        virtual Tensor<T, Batch, Input> Forward(const Tensor<T, Batch, Input> &input) = 0;
+        virtual Tensor<T, Batch, Input> Backward(const Tensor<T, Batch, Input> &nextDelta,
+                                                 const T &learningRate) = 0;
     };
 
     // ------------------------------------------------------------------------
     // implementation
     // ------------------------------------------------------------------------
 
-    class Dense : public BaseNet<float>
+    template <size_t Input, size_t Output, size_t Batch>
+    class Dense : public BaseNet<float, Input, Output, Batch>
     {
     public:
-        Dense(size_t inputSize, size_t outputSize);
-        Vector<float, 2> Forward(const Vector<float, 2> &input) override;
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate) override;
+        Dense() {}
+        Tensor<float, Batch, Output> Forward(const Tensor<float, Batch, Input> &input)
+        {
+            layerInput = input;
+            Tensor<float, Batch, Output> result = dot(input, weights);
+            for (size_t i = 0; i < Batch; i++)
+                result[i] += biases;
+        }
+
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Output> &nextDelta,
+                                             const T &learningRate)
+        {
+            Tensor<float, Batch, Input> delta = dot(nextDelta, get_transposed(weights));
+            weights -= dot(get_transposed(layerInput), nextDelta) / (float)Batch;
+            biases -= delta.map([](Tensor<float, Batch, Input>) {
+                Tensor<float, Input> result;
+                for (size_t i = 0; i < Batch; i++)
+                    result += Input;
+                return (result / (float)Batch);
+            });
+
+            return delta;
+        }
 
     private:
-        Vector<float, 2> layerInput;
+        Tensor<float, Batch, Input> layerInput;
     };
 
-    class Activation : public BaseActivation<float>
+    template <size_t Input, size_t Batch>
+    class Activation : public BaseActivation<float, Input, Batch>
     {
     public:
         Activation(const std::function<float(float)> &activation,
-                   const std::function<float(float)> &activationDerivative);
+                   const std::function<float(float)> &activationDerivative)
+            : m_activation(activation), m_activationDerivative(activationDerivative) {}
 
-        Vector<float, 2> Forward(const Vector<float, 2> &input) override;
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate) override;
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input)
+        {
+            layerInput = input;
+            return input.map(m_activation);
+        }
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             const float &learningRate)
+        {
+            return conv(nextDelta, input.map(m_activationDerivative));
+        }
 
     private:
         std::function<float(float)> m_activation;
         std::function<float(float)> m_activationDerivative;
 
-        Vector<float, 2> layerInput;
+        Tensor<float, Batch, Input> layerInput;
     };
 
-    class Sigmoid : public BaseActivation<float>
+    template <size_t Input, size_t Batch>
+    class Sigmoid : public BaseActivation<float, Input, Batch>
     {
     public:
         Sigmoid();
-        Vector<float, 2> Forward(const Vector<float, 2> &input) override;
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate) override;
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input) override;
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             const float &learningRate) override;
 
     private:
         std::function<float(float)> m_activation;
         std::function<float(float)> m_activationDerivative;
 
-        Vector<float, 2> layerOutput;
+        Tensor<float, Batch, Input> layerOutput;
     };
 
-    class Softmax : public BaseActivation<float>
+    template <size_t Input, size_t Batch>
+    class Softmax : public BaseActivation<float, Input, Batch>
     {
     public:
         Softmax();
-        Vector<float, 2> Forward(const Vector<float, 2> &input) override;
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate) override;
+        Tensor<float, Batch, Input> Forward(const Tensor<float, Batch, Input> &input) override;
+        Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
+                                             const float &learningRate) override;
 
     private:
-        std::function<Vector<float, 1>(Vector<float, 1>)> m_activation;
-    };
-
-    class SimpleRNN : public BaseActivation<float>
-    {
-    public:
-        explicit SimpleRNN(size_t size);
-        Vector<float, 2> Forward(const Vector<float, 2> &input) override;
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate);
-
-    private:
-        std::function<float(float)> m_activation;
-        std::function<float(float)> m_activationDerivative;
-
-        size_t m_size;
-        Dense m_dense;
-
-        Vector<float, 2> layerOutput;
-    };
-
-    class Layer
-    {
-    public:
-        Layer(BaseNet<float> *net, BaseActivation<float> *activation);
-        Vector<float, 2> Forward(const Vector<float, 2> &input);
-        Vector<float, 2> Backward(const Vector<float, 2> &nextDelta,
-                                  const float &learningRate);
-
-    public:
-        BaseNet<float> *m_net;
-        BaseActivation<float> *m_activation;
-    };
-
-    class Sequential
-    {
-    public:
-        Sequential(const std::initializer_list<Layer> &layers,
-                   const std::function<float(Vector<float, 1>, Vector<float, 1>)> &lossFunction);
-        float Train(const Vector<float, 2> &input, const Vector<float, 2> &output,
-                    const float &learningRate);
-        Vector<float, 1> Predict(const Vector<float, 1> &input);
-
-    private:
-        Vector<float, 2> Forward(const Vector<float, 2> &input);
-        void Backward(const Vector<float, 2> &output, const float &learningRate);
-        float Loss(const Vector<float, 2> &output, const Vector<float, 2> &expected);
-
-    public:
-        std::vector<Layer> m_layers;
-        std::function<float(Vector<float, 1>, Vector<float, 1>)> m_lossFunction;
+        std::function<Tensor<float, Input>(Tensor<float, Input>)> m_activation;
     };
 }; // namespace SingleNet
 

@@ -2,26 +2,52 @@
 #define LOAD_MNIST_H
 
 #include <string>
+#include <vector>
 
-#include "Vector.h"
+#include "Tensor.h"
 
 namespace SingleNet
 {
-    namespace Datasets
-    {
-        namespace MNIST
-        {
-            namespace Raw
-            {
-                std::vector<unsigned char *> read_mnist_images(std::string full_path, int &number_of_images, int &image_size);
-                std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_of_labels);
-            }
+    std::vector<unsigned char *> read_mnist_images(std::string full_path, int &number_of_images, int &image_size);
+    std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_of_labels);
 
-            Vector<float, 2> Image(std::string full_path);
-            Vector<float, 2> Label(std::string full_path);
+    template <size_t Batch, size_t ImageSize>
+    std::vector<Tensor<float, Batch, ImageSize>> Image(std::string full_path)
+    {
+        int image_num, image_size;
+        auto raw_images = read_mnist_images(full_path, image_num, image_size);
+
+        std::vector<Tensor<float, Batch, ImageSize>> mnist_images;
+        for (int i = 0; i < image_num / Batch; i++)
+        {
+            Tensor<float, Batch, ImageSize> temp;
+            for (int j = 0; j < Batch; j++)
+            {
+                for (int k = 0; k < ImageSize; k++)
+                    temp[j][k] = ((float)raw_images[i * Batch + j][k]) / 255.0f;
+            }
+            mnist_images.push_back(temp);
         }
 
-        Vector<size_t, 1> RandomIndexes(size_t size, size_t number_of_indexes);
+        return mnist_images;
+    }
+
+    template <size_t Batch>
+    std::vector<Tensor<size_t, Batch>> Label(std::string full_path)
+    {
+        int label_num;
+        auto raw_labels = read_mnist_labels(full_path, label_num);
+
+        std::vector<Tensor<int, Batch>> mnist_labels;
+        for (int i = 0; i < label_num / Batch; i++)
+        {
+            Tensor<float, Batch> temp;
+            for (int j = 0; j < Batch; j++)
+                temp[j] = raw_labels[i * Batch + j];
+            mnist_labels.push_back(temp);
+        }
+
+        return mnist_labels;
     }
 }
 

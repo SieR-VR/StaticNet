@@ -6,6 +6,7 @@
 #include <type_traits>
 #include <ostream>
 #include <numeric>
+#include <random>
 
 namespace SingleNet
 {
@@ -211,8 +212,50 @@ namespace SingleNet
             return (*this);
         }
 
+        template <class Other>
+        Tensor<Other, D, D_...> map(const std::function<T(Other)> &f)
+        {
+            if constexpr (sizeof...(D_))
+            {
+                Tensor<Other, D, D_...> result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = (*this)[i].map(f);
+
+                return result;
+            }
+            else
+            {
+                Tensor<Other, D> result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = f((*this)[i]);
+
+                return result;
+            }
+        }
+
+        template <class Other>
+        Tensor<Other, D_...> map(const std::function<Tensor<T, D>(Other)> &f)
+        {
+            if constexpr (sizeof...(D_) > 1)
+            {
+                Tensor<Other, D_...> result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = (*this)[i].map(f);
+
+                return result;
+            }
+            else
+            {
+                Tensor<Other, D_...> result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = f((*this)[i]);
+
+                return result;
+            }
+        }
+
     public:
-        const size_t dimension = TensorUtils::get_dim<D, D_...>();
+        const size_t rank = TensorUtils::get_dim<D, D_...>();
         const size_t shape[TensorUtils::get_dim<D, D_...>()] = {D, D_...};
         const size_t size = TensorUtils::get_size<D, D_...>();
     };
@@ -235,7 +278,12 @@ namespace SingleNet
                 data[i] = other.data[i];
         }
 
-        Tensor() : begin_iter(data), end_iter(data + this->size) {}
+        Tensor(std::uniform_real_distribution<T> dist = std::uniform_real_distribution<T>(-1.0, 1.0),
+               std::mt19937 mt = std::mt19937(std::random_device())) : begin_iter(data), end_iter(data + this->size)
+        {
+            for (size_t i = 0; i < this->size; i++)
+                data[i] = dist(mt);
+        }
 
         Tensor(const std::initializer_list<Sub> &list) : begin_iter(data), end_iter(data + this->size)
         {
@@ -264,9 +312,10 @@ namespace SingleNet
 
     private:
         T data[TensorUtils::get_size<D, D_...>()];
+
     public:
-        T* const begin_iter;
-        T* const end_iter;
+        T *const begin_iter;
+        T *const end_iter;
     };
 
     template <class T, size_t D, size_t... D_>
@@ -281,10 +330,8 @@ namespace SingleNet
         using SubRef = typename TensorUtils::sub_cond_ref<T, sizeof...(D_), D_...>::type;
 
     public:
-        TensorRef(const This &origin) : 
-            data_start(origin.data), begin_iter(data_start), end_iter(data_start + this->size) {}
-        TensorRef(T *const data_start) : 
-            data_start(data_start), begin_iter(data_start), end_iter(data_start + this->size) {}
+        TensorRef(const This &origin) : data_start(origin.data), begin_iter(data_start), end_iter(data_start + this->size) {}
+        TensorRef(T *const data_start) : data_start(data_start), begin_iter(data_start), end_iter(data_start + this->size) {}
 
         ThisRef &operator=(const This &origin)
         {
@@ -306,15 +353,16 @@ namespace SingleNet
         T *const data_start;
 
     public:
-        T* const begin_iter;
-        T* const end_iter;
+        T *const begin_iter;
+        T *const end_iter;
     };
 
     template <typename T, size_t D1, size_t D2>
-    Tensor<T, D2, D1> get_transposed(Tensor<T, D1, D2> &origin) {
+    Tensor<T, D2, D1> get_transposed(Tensor<T, D1, D2> &origin)
+    {
         Tensor<T, D2, D1> result;
 
-        for(size_t i = 0; i < D1; i++)
+        for (size_t i = 0; i < D1; i++)
             for (size_t j = 0; j < D2; j++)
                 result[j][i] = origin[i][j];
 
@@ -322,20 +370,51 @@ namespace SingleNet
     }
 
     template <typename T, size_t D1, size_t D2, size_t D3>
-    Tensor<T, D1, D3> dot(Tensor<T, D1, D2> &a, Tensor<T, D2, D3> &b) {
+    Tensor<T, D1, D3> dot(Tensor<T, D1, D2> &a, Tensor<T, D2, D3> &b)
+    {
         Tensor<T, D1, D3> result;
 
         auto b_transposed = get_transposed(b);
 
-        #pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared)
         for (size_t i = 0; i < D1; i++)
-            for (size_t j = 0; j < D3; j++) {
+            for (size_t j = 0; j < D3; j++)
+            {
                 auto a_sub = a[i];
                 auto b_sub = b_transposed[j];
                 result[i][j] = std::inner_product(a_sub.begin_iter, a_sub.end_iter, b_sub.begin_iter, T());
             }
 
         return result;
+    }
+
+    template <typename T, size_t D1, size_t D2>
+    Tensor<T, D1, D2> conv(Tensor<T, D1, D2> &a, Tensor<T, D1, D2> &b)
+    {
+        Tensor<T, D1, D2> result;
+
+#pragma omp parallel for default(shared)
+        for (size_t i = 0; i < D1; i++)
+            for (size_t j = 0; j < D2; j++)
+                result[i][j] = a[i][j] * b[i][j];
+
+        return result;
+    }
+
+    template <typename T, size_t D>
+    size_t argmax(Tensor<T, D> &t)
+    {
+        T max = std::min(INT32_MIN, T());
+        size_t max_idx = -1;
+
+        for (size_t i = 0; i < D; i++)
+            if (t[i] > max)
+            {
+                max = t[i];
+                max_idx = i;
+            }
+
+        return max_idx;
     }
 }
 
