@@ -15,7 +15,8 @@ namespace SingleNet
     template <class T, size_t... Input>
     class ReLU<Tensor<T, Input...>> : public Module<T>
     {
-        ReLU() : Module<T>("ReLU") {}
+    public:
+        ReLU(Module<T> *parent) : Module<T>("ReLU", parent) {}
         ~ReLU() {}
 
         template <size_t Batch>

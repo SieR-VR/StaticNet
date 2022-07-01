@@ -3,7 +3,7 @@
 #include <iostream>
 #include <time.h>
 
-#include "Layers.h"
+#include "Models/ReNet.h"
 #include "Datasets.h"
 
 constexpr size_t Input = 28 * 28;
@@ -22,9 +22,7 @@ int main(int argc, char *argv[])
         auto MNIST_Image = Image<Batch, Input>(path + "/train-images.idx3-ubyte");
         auto MNIST_Label = Label<Batch, Output>(path + "/train-labels.idx1-ubyte");
 
-        Layer<Input, 100, Batch> dense1 = {new Dense<Input, 100, Batch>(), new Activation<100, Batch>(Defines::ReLU, Defines::ReLUDerivative)};
-        Layer<100, 100, Batch> dense2 = {new Dense<100, 100, Batch>(), new Activation<100, Batch>(Defines::ReLU, Defines::ReLUDerivative)};
-        Layer<100, Output, Batch> dense3 = {new Dense<100, Output, Batch>(), new Softmax<Output, Batch>()};
+        ReNet model;
 
         for (size_t epoch = 0; epoch < 10; epoch++)
         {
@@ -32,15 +30,9 @@ int main(int argc, char *argv[])
 
             for (int i = 0; i < 600; i++)
             {
-                auto x = dense1(MNIST_Image[i]);
-                x = dense2(x);
-                auto result = dense3(x);
-
+                auto result = model.forward(MNIST_Image[i].reshape<Batch, 28, 28>().deref());
                 auto y = MNIST_Label[i];
-
-                auto grad = dense3.Backward((result - y), 0.1f);
-                grad = dense2.Backward(grad, 0.1f);
-                dense1.Backward(grad, 0.1f);
+                model.backward(result - y, 0.1f); 
 
                 if (i % 30 == 29)
                     printf("=");
@@ -56,10 +48,7 @@ int main(int argc, char *argv[])
 
         for (int i = 0; i < 100; i++)
         {
-            auto x = dense1(testImage[i]);
-            x = dense2(x);
-            auto result = dense3(x);
-
+            auto result = model.forward(testImage[i].reshape<Batch, 28, 28>().deref());
             auto y = testLabel[i];
 
             for (int j = 0; j < Batch; j++)

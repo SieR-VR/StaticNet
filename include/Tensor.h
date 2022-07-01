@@ -317,13 +317,6 @@ namespace SingleNet
             }
         }
 
-        template <size_t ...R>
-        TensorRef<T, R...> reshape()
-        {
-            static_assert(TensorUtils::get_size<R...>() == size, "Size must be matched");
-            return TensorRef<T, R...>(*this);
-        }
-
         T sum() const
         {
             T result = 0;
