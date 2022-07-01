@@ -117,7 +117,7 @@ namespace SingleNet
         Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
                                              float learningRate)
         {
-            return conv(nextDelta, layerInput.map(m_activationDerivative));
+            return hadamard(nextDelta, layerInput.map(m_activationDerivative));
         }
 
     private:
@@ -141,7 +141,7 @@ namespace SingleNet
         Tensor<float, Batch, Input> Backward(const Tensor<float, Batch, Input> &nextDelta,
                                              float learningRate)
         {
-            return conv(nextDelta, layerOutput.map(m_activationDerivative));
+            return hadamard(nextDelta, layerOutput.map(m_activationDerivative));
         }
 
     private:

@@ -14,6 +14,8 @@ endif()
 file(GLOB SINGLENET_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/**/*.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/**/*.h
 )
 
 add_library(singlenet STATIC ${SINGLENET_SOURCES})

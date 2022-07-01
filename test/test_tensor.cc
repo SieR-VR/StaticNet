@@ -11,5 +11,5 @@ int main() {
 
     auto t2 = t1;
 
-    std::cout << SingleNet::dot(t1, t2); 
+    std::cout << t1 + t2; 
 }

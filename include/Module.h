@@ -5,66 +5,50 @@
 
 namespace SingleNet
 {
-    template <typename... T>
+    enum class AccessType
+    {
+        Read = 0,
+        Write = 1
+    };
+
+    template <class T>
     class Module
     {
-    };
-
-    template <class InputType, size_t... InputDim, class OutputType, size_t... OutputDim>
-    class Module<Tensor<InputType, InputDim...>, Tensor<OutputType, OutputDim...>>
-    {
-        using InputTensor = Tensor<InputType, InputDim...>;
-        using OutputTensor = Tensor<OutputType, OutputDim...>;
-
     public:
         Module() {}
+        Module(Module<T> *parent) { parent->children.push_back(this); }
         virtual ~Module() {}
 
-        virtual OutputTensor forward(const InputTensor &input) = 0;
-        virtual InputTensor backward(const OutputTensor &nextDelta, float learningRate) = 0;
-    };
-
-    template <typename... T>
-    class Linear
-    {
-    };
-
-    template <class T, size_t Input, size_t Output, size_t Batch>
-    class Linear<Tensor<T, Batch, Input>, Tensor<T, Batch, Output>>
-        : public Module<Tensor<T, Batch, Input>, Tensor<T, Batch, Output>>
-    {
-        using InputTensor = Tensor<T, Batch, Input>;
-        using OutputTensor = Tensor<T, Batch, Output>;
-
-    public:
-        Linear() {}
-        ~Linear() {}
-
-        OutputTensor forward(const InputTensor &input)
+        template <size_t Batch, size_t Input, size_t Output>
+        Tensor<T, Batch, Output> forward(const Tensor<T, Batch, Input> &input)
         {
-            layerInput = input;
-            return dot(input, weights) + biases;
+            return Tensor<T, Batch, Output>();
+        };
+        template <size_t Batch, size_t Input, size_t Output>
+        Tensor<T, Batch, Input> backward(const Tensor<T, Batch, Output> &nextDelta, float learningRate)
+        {
+            return Tensor<T, Batch, Input>();
+        };
+
+        template <size_t Batch, size_t ...InputSize>
+        Tensor<T, Batch, InputSize...> memory(AccessType access, const Tensor<T, Batch, InputSize...> &input = Tensor<T, Batch, InputSize...>())
+        {
+            static Tensor<T, Batch, InputSize...> layer_input;
+
+            if (access == AccessType::Read)
+            {
+                return layer_input;
+            }
+            else if (access == AccessType::Write)
+            {
+                layer_input = input;
+                return input;
+            }
+
+            return input;
         }
 
-        InputTensor backward(const OutputTensor &nextDelta, float learningRate)
-        {
-            weights -= dot(get_transposed(layerInput), nextDelta) / (float)Batch * learningRate;
-            biases -= ([](OutputTensor delta)
-                       {
-                Tensor<T, Output> result(0.0f);
-                for (size_t i = 0; i < Batch; i++)
-                    result[i] = delta[i];
-                return result; })(nextDelta) /
-                      (float)Batch * learningRate;
-
-            return dot(nextDelta, get_transposed(weights));
-        }
-
-    private:
-        Tensor<T, Input, Output> weights;
-        Tensor<T, Output> biases;
-
-        Tensor<T, Batch, Input> layerInput;
+        std::vector<Module<T> *> children;
     };
 }
 
