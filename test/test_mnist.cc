@@ -4,11 +4,12 @@
 #include <time.h>
 
 #include "Models/ReNet.h"
+#include "Models/AffineNet.h"
 #include "Datasets.h"
 
 constexpr size_t Input = 28 * 28;
 constexpr size_t Output = 10;
-constexpr size_t Batch = 100;
+constexpr size_t Batch = 200;
 
 int main(int argc, char *argv[])
 {
@@ -22,23 +23,29 @@ int main(int argc, char *argv[])
         auto MNIST_Image = Image<Batch, Input>(path + "/train-images.idx3-ubyte");
         auto MNIST_Label = Label<Batch, Output>(path + "/train-labels.idx1-ubyte");
 
-        ReNet model;
+        LeNet model;
+        // AffineNet model;
+        print(model);
 
         for (size_t epoch = 0; epoch < 10; epoch++)
         {
-            printf("Epoch %lu [", epoch);
+            printf("Epoch %lu\n", epoch);
 
-            for (int i = 0; i < 600; i++)
+            for (int i = 0; i < 300; i++)
             {
-                auto result = model.forward(MNIST_Image[i].reshape<Batch, 28, 28>().deref());
+                auto x = model.forward(MNIST_Image[i].template reshape<Batch, 1, 28, 28>());
+                // auto x = model.forward(MNIST_Image[i]);
+                auto result = x.apply(Defines::Softmax<Output>);
+
                 auto y = MNIST_Label[i];
-                model.backward(result - y, 0.1f); 
+                float loss = 0.0f;
+                for (size_t j = 0; j < Batch; j++)
+                    loss += Defines::CrossEntropy<Output>(y[j], result[j]) / (float)Batch;
+                model.backward((result - y), 0.001f); 
 
-                if (i % 30 == 29)
-                    printf("=");
+                // if (i % 50 == 49)
+                    printf("Batch %d, loss: %f\n", i+1, loss);   
             }
-
-            printf("]\n");
         }
 
         auto testImage = Image<Batch, Input>(path + "/t10k-images.idx3-ubyte");
@@ -46,9 +53,10 @@ int main(int argc, char *argv[])
 
         size_t correct = 0;
 
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 50; i++)
         {
-            auto result = model.forward(testImage[i].reshape<Batch, 28, 28>().deref());
+            auto result = model.forward(testImage[i].template reshape<Batch, 1, 28, 28>());
+            // auto result = model.forward(testImage[i]);
             auto y = testLabel[i];
 
             for (int j = 0; j < Batch; j++)

@@ -14,7 +14,7 @@ int main()
         {21, 22, 23, 24, 25},
     }};
 
-    ReNet renet;
+    LeNet renet;
 
     print(renet);
 }

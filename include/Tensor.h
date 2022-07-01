@@ -80,24 +80,14 @@ namespace SingleNet
         {
             typedef Tensor<T, FD> type;
         };
-
-        template <typename>
-        struct is_tensor : std::false_type
-        {
-        };
-
-        template <class T, size_t... Dims>
-        struct is_tensor<Tensor<T, Dims...>> : std::true_type
-        {
-        };
-
-        template <typename T>
-        constexpr bool is_tensor_v = is_tensor<T>::value;
     }
 
     template <class T, size_t D, size_t... D_>
     class SymbolicTensor
     {
+        friend class Tensor<T, D, D_...>;
+        friend class TensorRef<T, D, D_...>;
+
         using SymbolicThis = SymbolicTensor<T, D, D_...>;
         using SymbolicRef = SymbolicTensor<T, D, D_...>;
 
@@ -109,8 +99,8 @@ namespace SingleNet
         using RefElement = typename TensorUtils::sub_ref_array<T, sizeof...(D_), D_...>::type;
 
     public:
-        virtual RefElement &operator[](size_t i) = 0;
-        virtual const RefElement &operator[](size_t i) const = 0;
+        virtual SubRef operator[](size_t i) = 0;
+        virtual const SubRef operator[](size_t i) const = 0;
 
         bool operator==(const This &other) const
         {
@@ -148,8 +138,8 @@ namespace SingleNet
             return true;
         }
 
-        template <class U, size_t... Dims>
-        This operator+(const Tensor<U, Dims...> &other) const
+        template <class U>
+        This operator+(const SymbolicTensor<U, D, D_...> &other) const
         {
             This result;
 
@@ -159,19 +149,8 @@ namespace SingleNet
             return result;
         }
 
-        template <class U, size_t... Dims>
-        This operator+(const TensorRef<U, Dims...> other) const
-        {
-            This result;
-
-            for (size_t i = 0; i < D; i++)
-                result[i] = (*this)[i] + other[i];
-
-            return result;
-        }
-
-        template <class U, size_t... Dims>
-        auto &operator+=(const Tensor<U, Dims...> &other)
+        template <class U>
+        auto &operator+=(const SymbolicTensor<U, D, D_...> &other)
         {
             for (size_t i = 0; i < D; i++)
                 (this->operator[](i)) += other[i];
@@ -179,17 +158,8 @@ namespace SingleNet
             return (*this);
         }
 
-        template <class U, size_t... Dims>
-        auto &operator+=(const TensorRef<U, Dims...> other)
-        {
-            for (size_t i = 0; i < D; i++)
-                (this->operator[](i)) += other[i];
-
-            return *this;
-        }
-
-        template <class U, size_t... Dims>
-        This operator-(const Tensor<U, Dims...> &other) const
+        template <class U>
+        This operator-(const SymbolicTensor<U, D, D_...> &other) const
         {
             This result;
 
@@ -199,28 +169,8 @@ namespace SingleNet
             return result;
         }
 
-        template <class U, size_t... Dims>
-        This operator-(const TensorRef<U, Dims...> other) const
-        {
-            This result;
-
-            for (size_t i = 0; i < D; i++)
-                result[i] = (*this)[i] - other[i];
-
-            return result;
-        }
-
-        template <class U, size_t... Dims>
-        auto &operator-=(const Tensor<U, Dims...> &other)
-        {
-            for (size_t i = 0; i < D; i++)
-                (*this)[i] -= other[i];
-
-            return (*this);
-        }
-
-        template <class U, size_t... Dims>
-        auto &operator-=(const TensorRef<U, Dims...> other)
+        template <class U>
+        auto &operator-=(const SymbolicTensor<U, D, D_...> &other)
         {
             for (size_t i = 0; i < D; i++)
                 (*this)[i] -= other[i];
@@ -317,17 +267,9 @@ namespace SingleNet
             }
         }
 
-        T sum() const
-        {
-            T result = 0;
-            for (size_t i = 0; i < D; i++)
-                result += (*this)[i];
-            return result;
-        }
-
         Sub reduce() const
         {
-            Sub result(T());
+            Sub result = T();
 
             for (size_t i = 0; i < D; i++)
                 result += (*this)[i];
@@ -336,57 +278,40 @@ namespace SingleNet
         }
 
     public:
-        const size_t rank = TensorUtils::get_rank<D, D_...>();
-        const size_t shape[TensorUtils::get_rank<D, D_...>()] = {D, D_...};
-        const size_t size = TensorUtils::get_size<D, D_...>();
+        static constexpr size_t rank = TensorUtils::get_rank<D, D_...>();
+        static constexpr size_t shape[TensorUtils::get_rank<D, D_...>()] = {D, D_...};
+        static constexpr size_t size = TensorUtils::get_size<D, D_...>();
     };
 
     template <class T, size_t D, size_t... D_>
     class Tensor : public SymbolicTensor<T, D, D_...>
     {
         friend class TensorRef<T, D, D_...>;
+        friend class SymbolicTensor<T, D, D_...>;
 
         using This = Tensor<T, D, D_...>;
         using ThisRef = TensorRef<T, D, D_...>;
 
         using Sub = typename TensorUtils::sub_cond<T, sizeof...(D_), D_...>::type;
         using SubRef = typename TensorUtils::sub_cond_ref<T, sizeof...(D_), D_...>::type;
-        using RefElement = typename TensorUtils::sub_ref_array<T, sizeof...(D_), D_...>::type;
 
     public:
-        Tensor(const SymbolicTensor<T, D, D_...> &symbolic)
-            : begin_iter(data), end_iter(data + this->size)
-        {
-            init_refs();
-            for (size_t i = 0; i < this->size; i++)
-                data[i] = symbolic[i];
-        }
-
         Tensor(const T &value = T())
             : begin_iter(data), end_iter(data + this->size)
         {
-            init_refs();
             for (size_t i = 0; i < this->size; i++)
                 data[i] = value;
         }
 
-        Tensor(const This &other) : begin_iter(data), end_iter(data + this->size)
+        Tensor(const SymbolicTensor<T, D, D_...> &symbolic)
+            : begin_iter(data), end_iter(data + this->size)
         {
-            init_refs();
             for (size_t i = 0; i < this->size; i++)
-                data[i] = other.data[i];
-        }
-
-        Tensor(const ThisRef other) : begin_iter(data), end_iter(data + this->size)
-        {
-            init_refs();
-            for (size_t i = 0; i < this->size; i++)
-                (*this)[i] = other[i];
+                (*this)[i] = symbolic[i];
         }
 
         Tensor(const std::initializer_list<Sub> &list) : begin_iter(data), end_iter(data + this->size)
         {
-            init_refs();
             size_t idx = 0;
             for (const auto &sub : list)
                 (*this)[idx++] = Sub(sub);
@@ -418,7 +343,7 @@ namespace SingleNet
             return (*this);
         }
 
-        This &operator=(const This &other)
+        This &operator=(const SymbolicTensor<T, D, D_...> &other)
         {
             for (size_t i = 0; i < this->size; i++)
                 data[i] = other.data[i];
@@ -426,53 +351,51 @@ namespace SingleNet
             return (*this);
         }
 
-        RefElement &operator[](size_t i)
+        SubRef operator[](size_t i)
         {
             if constexpr (sizeof...(D_))
-            {
-                return *refs[i];
-            }
+                return data + i * TensorUtils::get_size<D_...>();
             else
                 return data[i];
         }
 
-        const RefElement &operator[](size_t i) const
+        const SubRef operator[](size_t i) const
         {
             if constexpr (sizeof...(D_))
-            {
-                return *refs[i];
-            }
+                return data + i * TensorUtils::get_size<D_...>();
             else
                 return const_cast<T *>(data)[i];
         }
 
-    private:
-        T data[TensorUtils::get_size<D, D_...>()];
-        RefElement *refs[D];
-
-        void init_refs()
+        template <size_t ...P>
+        TensorRef<T, P...> reshape_ref() const
         {
-            if constexpr (sizeof...(D_))
-            {
-                for (size_t i = 0; i < D; i++)
-                    refs[i] = new RefElement(data + i * TensorUtils::get_size<D_...>());
-            }
-            else
-            {
-                for (size_t i = 0; i < D; i++)
-                    refs[i] = (data + i);
-            }
+            return TensorRef<T, P...>(this->data);
+        }
+
+        template <size_t ...P>
+        Tensor<T, P...> reshape() const
+        {
+            static_assert(TensorUtils::get_size<P...>() == this->size, "Tensor reshape error");
+
+            Tensor<T, P...> result;
+            for (size_t i = 0; i < TensorUtils::get_size<P...>(); i++)
+                result.data[i] = (*this).data[i];
+
+            return result;
         }
 
     public:
-        T *const begin_iter;
-        T *const end_iter;
+        T data[TensorUtils::get_size<D, D_...>()];
+        T * begin_iter;
+        T * end_iter;
     };
 
     template <class T, size_t D, size_t... D_>
     class TensorRef : public SymbolicTensor<T, D, D_...>
     {
         friend class Tensor<T, D, D_...>;
+        friend class SymbolicTensor<T, D, D_...>;
 
         using This = Tensor<T, D, D_...>;
         using ThisRef = TensorRef<T, D, D_...>;
@@ -487,28 +410,24 @@ namespace SingleNet
               begin_iter(nullptr), 
               end_iter(static_cast<T *>(nullptr) + this->size)
         {
-            init_refs();
         }
         TensorRef(This &origin)
             : data(origin.data), 
               begin_iter(data), 
               end_iter(data + this->size)
         {
-            init_refs();
         }
         TensorRef(T *const data_start)
             : data(data_start), 
               begin_iter(data_start), 
               end_iter(data_start + this->size)
         {
-            init_refs();
         }
         TensorRef(const T *data_start)
             : data(const_cast<T *>(data_start)),
               begin_iter(const_cast<T *>(data_start)),
               end_iter(const_cast<T *>(data_start) + this->size)
         {
-            init_refs();
         }
 
         ThisRef &operator=(const This &origin)
@@ -527,18 +446,18 @@ namespace SingleNet
             return *this;
         }
 
-        RefElement &operator[](size_t i)
+        SubRef operator[](size_t i)
         {
             if constexpr (sizeof...(D_))
-                return *refs[i];
+                return data + i * TensorUtils::get_size<D_...>();
             else
                 return data[i];
         }
 
-        const RefElement &operator[](size_t i) const
+        const SubRef operator[](size_t i) const
         {
             if constexpr (sizeof...(D_))
-                return *refs[i];
+                return data + i * TensorUtils::get_size<D_...>();
             else
                 return data[i];
         }
@@ -551,25 +470,8 @@ namespace SingleNet
             return result;
         }
 
-    private:
-        T *const data;
-        RefElement *refs[D];
-
-        void init_refs()
-        {
-            if constexpr (sizeof...(D_))
-            {
-                for (size_t i = 0; i < D; i++)
-                    refs[i] = new RefElement(data + i * TensorUtils::get_size<D_...>());
-            }
-            else
-            {
-                for (size_t i = 0; i < D; i++)
-                    refs[i] = (data + i);
-            }
-        }
-
     public:
+        T *const data;
         T *const begin_iter;
         T *const end_iter;
     };
@@ -612,6 +514,8 @@ namespace SingleNet
 
         for (size_t i = 0; i < D; i++)
             result[i] = hadamard(a[i], b[i]);
+
+        return result;
     }
 
     template <typename T, size_t D1, size_t D2>
@@ -650,8 +554,8 @@ namespace SingleNet
         for (size_t i = 0; i < IDim-KDim+1; i++)
             for (size_t j = 0; j < IDim-KDim+1; j++)
                 for (size_t k = 0; k < KDim; k++)
-                    for(size_t l = 0; l < KDim; l++)
-                        result[i][j] += input[i + k][j + l] * kernel[k][l];
+                    for (size_t l = 0; l < KDim; l++)
+                        result[i][j] += input[i+k][j+l] * kernel[k][l];
 
         return result;
     }
@@ -663,15 +567,15 @@ namespace SingleNet
 
         for (size_t i = 0; i < D; i++)
             for (size_t j = 0; j < D; j++)
-                result[i][j] = input[D-i][D-j];
+                result[i][j] = input[D-i-1][D-j-1];
 
         return result;
     }
     
     template <typename T, size_t D, size_t P>
-    Tensor<T, D+2*P, D+2*P> pad(const Tensor<T, D, D> &input, T pad_value = T())
+    Tensor<T, D+2*P, D+2*P> pad(const SymbolicTensor<T, D, D> &input, T pad_value = T())
     {
-        Tensor<T, D+2*P, D+2*P> result(pad_value);
+        Tensor<T, D+2*P, D+2*P> result { pad_value };
 
         for (size_t i = 0; i < D; i++)
             for (size_t j = 0; j < D; j++)
@@ -679,6 +583,42 @@ namespace SingleNet
 
         return result;
     }
+
+    template <typename T, size_t IDim, size_t ODim>
+    Tensor<T, ODim, ODim> pool(const SymbolicTensor<T, IDim, IDim> &input, std::function<T(Tensor<T, IDim/ODim, IDim/ODim>)> pool_func)
+    {
+        constexpr size_t KernelSize = IDim/ODim;
+        Tensor<T, ODim, ODim> result;
+
+        for (size_t i = 0; i < ODim; i++)
+            for (size_t j = 0; j < ODim; j++) {
+                Tensor<T, KernelSize, KernelSize> sub_input;
+                for (size_t k = 0; k < KernelSize; k++)
+                    for (size_t l = 0; l < KernelSize; l++)
+                        sub_input[k][l] = input[i*KernelSize+k][j*KernelSize+l];
+
+                result[i][j] = pool_func(sub_input);
+            }
+
+        return result;
+    }
+
+    template <typename T, size_t IDim, size_t ODim>
+    Tensor<T, IDim, IDim> unpool(const SymbolicTensor<T, ODim, ODim> &input, std::function<Tensor<T, IDim/ODim, IDim/ODim>(T)> unpool_func)
+    {
+        constexpr size_t KernelSize = IDim/ODim;
+        Tensor<T, IDim, IDim> result;
+
+        for (size_t i = 0; i < ODim; i++)
+            for (size_t j = 0; j < ODim; j++) {
+                Tensor<T, KernelSize, KernelSize> sub_input = unpool_func(input[i][j]);
+                for (size_t k = 0; k < KernelSize; k++)
+                    for (size_t l = 0; l < KernelSize; l++)
+                        result[i*KernelSize+k][j*KernelSize+l] = sub_input[k][l];
+            }
+
+        return result;
+    } 
 
     template <typename T, size_t D>
     size_t argmax(const SymbolicTensor<T, D> &t)

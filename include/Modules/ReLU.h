@@ -20,19 +20,25 @@ namespace SingleNet
         ~ReLU() {}
 
         template <size_t Batch>
-        Tensor<T, Input...> forward(const Tensor<T, Input...> &input) {
-            memory(AccessType::Write, input);
-            return input.map([](T value) {
-                return value > 0 ? value : 0;
-            });
+        Tensor<T, Batch, Input...> forward(const Tensor<T, Batch, Input...> &input) {
+            this->memory(AccessType::Write, input);
+            return input.map(relu);
         }
 
         template <size_t Batch>
-        Tensor<T, Input...> backward(const Tensor<T, Input...> &delta) {
-            return conv(memory(AccessType::Read, Tensor<T, Input...>()).map([](T value) {
-                return value > 0 ? 1 : 0;
-            }), delta);
+        Tensor<T, Batch, Input...> backward(const Tensor<T, Batch, Input...> &delta, float learningRate) {
+            Tensor<T, Batch, Input...> input = this->memory(AccessType::Read, Tensor<T, Batch, Input...>());
+            return hadamard(input.map(relu_grad), delta);
         }
+
+    private:
+        std::function<T(T)> relu = [](T value) {
+            return value > 0 ? value : T();
+        };
+        
+        std::function<T(T)> relu_grad = [](T value) {
+            return value > 0 ? 1 : 0;
+        };
     };
 }
 

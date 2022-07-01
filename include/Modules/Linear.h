@@ -15,13 +15,16 @@ namespace SingleNet
     class Linear<Tensor<T, Input>, Tensor<T, Output>> : public Module<T>
     {
     public:
-        Linear(Module<T> *parent) : Module<T>("Linear", parent, (Input) * (Output + 1)) {};
+        Linear(Module<T> *parent) : Module<T>("Linear", parent, (Input) * (Output + 1)) {
+            weights = Tensor<T, Input, Output>::random();
+            biases = Tensor<T, Output>::random();
+        };
         ~Linear() {}
 
         template <size_t Batch>
         Tensor<T, Batch, Output> forward(const Tensor<T, Batch, Input> &input)
         {
-            memory(AccessType::Write, input);
+            this->memory(AccessType::Write, input);
             auto result = dot(input, weights);
             for (size_t i = 0; i < Batch; i++)
                 result[i] += biases;
@@ -34,21 +37,15 @@ namespace SingleNet
         {
             Tensor<T, Batch, Input> input = this->memory(AccessType::Read, Tensor<T, Batch, Input>());
 
-            weights -= dot(get_transposed(input), nextDelta) / (float)Batch * learningRate;
-            biases -= ([](Tensor<T, Batch, Output> delta) {
-                          Tensor<T, Output> result(0.0f);
-                          for (size_t i = 0; i < Batch; i++)
-                              result += delta[i];
-                          return result;
-                      })(nextDelta) /
-                      (float)Batch * learningRate;
+            weights -= (dot(get_transposed(input), nextDelta) / (float)Batch) * learningRate;
+            biases -= (nextDelta.reduce() / (float)Batch) * learningRate;
 
             return dot(nextDelta, get_transposed(weights));
         }
 
     private:
-        Tensor<T, Input, Output> weights = Tensor<T, Input, Output>::random();
-        Tensor<T, Output> biases = Tensor<T, Output>::random();
+        Tensor<T, Input, Output> weights;
+        Tensor<T, Output> biases;
     };
 }
 
