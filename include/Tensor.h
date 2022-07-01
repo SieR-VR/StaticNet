@@ -6,8 +6,9 @@
 #include <type_traits>
 #include <ostream>
 #include <numeric>
-#include <random>
 #include <vector>
+
+#include "Utils/Random.h"
 
 namespace SingleNet
 {
@@ -316,6 +317,13 @@ namespace SingleNet
             }
         }
 
+        template <size_t ...R>
+        TensorRef<T, R...> reshape()
+        {
+            static_assert(TensorUtils::get_size<R...>() == size, "Size must be matched");
+            return TensorRef<T, R...>(*this);
+        }
+
         T sum() const
         {
             T result = 0;
@@ -389,6 +397,22 @@ namespace SingleNet
             size_t idx = 0;
             for (const auto &sub : list)
                 (*this)[idx++] = Sub(sub);
+        }
+
+        static This random()
+        {
+            if constexpr (sizeof...(D_)) {
+                This result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = Sub::random();
+                return result;
+            }
+            else {
+                This result;
+                for (size_t i = 0; i < D; i++)
+                    result[i] = Random::rand<T>();
+                return result;
+            }
         }
 
         ThisRef &ref()

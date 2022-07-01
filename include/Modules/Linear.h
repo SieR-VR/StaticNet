@@ -15,14 +15,18 @@ namespace SingleNet
     class Linear<Tensor<T, Input>, Tensor<T, Output>> : public Module<T>
     {
     public:
-        Linear() {}
+        Linear(Module<T> *parent) : Module<T>("Linear", parent, (Input) * (Output + 1)) {};
         ~Linear() {}
 
         template <size_t Batch>
         Tensor<T, Batch, Output> forward(const Tensor<T, Batch, Input> &input)
         {
             memory(AccessType::Write, input);
-            return dot(input, weights) + biases;
+            auto result = dot(input, weights);
+            for (size_t i = 0; i < Batch; i++)
+                result[i] += biases;
+
+            return result;
         }
 
         template <size_t Batch>
@@ -43,8 +47,8 @@ namespace SingleNet
         }
 
     private:
-        Tensor<T, Input, Output> weights;
-        Tensor<T, Output> biases;
+        Tensor<T, Input, Output> weights = Tensor<T, Input, Output>::random();
+        Tensor<T, Output> biases = Tensor<T, Output>::random();
     };
 }
 

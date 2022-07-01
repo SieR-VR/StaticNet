@@ -18,19 +18,7 @@ namespace SingleNet
         static constexpr size_t KDim = IDim-ODim+1;
 
     public:
-        Conv2D() {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<> dis(-1.0f, 1.0f);
-
-            for (size_t i = 0; i < KDim; i++)
-                for (size_t j = 0; j < KDim; j++)
-                    kernel[i][j] = dis(gen);
-            
-            for (size_t i = 0; i < ODim; i++)
-                for (size_t j = 0; j < ODim; j++)
-                    biases[i][j] = dis(gen);
-        }
+        Conv2D(Module<T> *parent) : Module<T>("Conv2D", parent, KDim * KDim + ODim * ODim) {};
 
         template <size_t Batch>
         Tensor<T, Batch, ODim, ODim> forward(const Tensor<T, Batch, IDim, IDim> &input)
@@ -56,8 +44,10 @@ namespace SingleNet
         }
 
     private:
-        Tensor<T, KDim, KDim> kernel;
-        Tensor<T, ODim, ODim> biases;
+        Tensor<T, KDim, KDim> kernel = Tensor<T, KDim, KDim>::random();
+        Tensor<T, ODim, ODim> biases = Tensor<T, ODim, ODim>::random();
+
+
     };
 }
 
