@@ -15,10 +15,7 @@ namespace SingleNet
     class Linear<Tensor<T, Input>, Tensor<T, Output>> : public Module<T>
     {
     public:
-        Linear(Module<T> *parent) : Module<T>("Linear", parent, (Input) * (Output + 1)) {
-            weights = Tensor<T, Input, Output>::random();
-            biases = Tensor<T, Output>::random();
-        };
+        Linear(Module<T> *parent) : Module<T>("Linear", parent, (Input) * (Output + 1)) {};
         ~Linear() {}
 
         template <size_t Batch>
@@ -44,8 +41,8 @@ namespace SingleNet
         }
 
     private:
-        Tensor<T, Input, Output> weights;
-        Tensor<T, Output> biases;
+        Tensor<T, Input, Output> weights = Tensor<T, Input, Output>::random();
+        Tensor<T, Output> biases = Tensor<T, Output>::random();
     };
 }
 

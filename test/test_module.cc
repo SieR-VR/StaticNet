@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Models/ReNet.h"
+#include "Models/LeNet.h"
 
 int main()
 {
@@ -13,8 +13,4 @@ int main()
         {16, 17, 18, 19, 20},
         {21, 22, 23, 24, 25},
     }};
-
-    LeNet renet;
-
-    print(renet);
 }

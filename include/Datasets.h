@@ -43,10 +43,7 @@ namespace SingleNet
         {
             Tensor<bool, Batch, LabelSize> temp(false);
             for (int j = 0; j < Batch; j++)
-            {
-                for (int k = 0; k < LabelSize; k++)
-                    temp[j][k] = raw_labels[i * Batch + j] == k;
-            }
+                temp[j][raw_labels[i * Batch + j]] = true;
             mnist_labels.push_back(temp);
         }
 

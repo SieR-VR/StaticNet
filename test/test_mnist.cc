@@ -3,7 +3,7 @@
 #include <iostream>
 #include <time.h>
 
-#include "Models/ReNet.h"
+#include "Models/LeNet.h"
 #include "Models/AffineNet.h"
 #include "Datasets.h"
 
@@ -27,11 +27,11 @@ int main(int argc, char *argv[])
         // AffineNet model;
         print(model);
 
-        for (size_t epoch = 0; epoch < 10; epoch++)
+        for (size_t epoch = 0; epoch < 3; epoch++)
         {
-            printf("Epoch %lu\n", epoch);
+            printf("Epoch %zu [", epoch);
 
-            for (int i = 0; i < 300; i++)
+            for (int i = 0; i < 60000 / Batch; i++)
             {
                 auto x = model.forward(MNIST_Image[i].template reshape<Batch, 1, 28, 28>());
                 // auto x = model.forward(MNIST_Image[i]);
@@ -41,11 +41,13 @@ int main(int argc, char *argv[])
                 float loss = 0.0f;
                 for (size_t j = 0; j < Batch; j++)
                     loss += Defines::CrossEntropy<Output>(y[j], result[j]) / (float)Batch;
-                model.backward((result - y), 0.001f); 
+                model.backward((result - y), 0.03f); 
 
-                // if (i % 50 == 49)
-                    printf("Batch %d, loss: %f\n", i+1, loss);   
+                if (i % 10 == 9)
+                    printf("=");   
             }
+
+            printf("]\n");
         }
 
         auto testImage = Image<Batch, Input>(path + "/t10k-images.idx3-ubyte");
@@ -53,7 +55,7 @@ int main(int argc, char *argv[])
 
         size_t correct = 0;
 
-        for (int i = 0; i < 50; i++)
+        for (int i = 0; i < 10000 / Batch; i++)
         {
             auto result = model.forward(testImage[i].template reshape<Batch, 1, 28, 28>());
             // auto result = model.forward(testImage[i]);
