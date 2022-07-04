@@ -1,14 +1,11 @@
-# MyFixNet
+# StaticNet
 
-## 프로젝트 동기
+## StaticNet?
 
-Floating point 연산은 Arduino Uno에서 돌리기엔 너무 무겁습니다. (FPU가 없기 때문)
+StaticNet is lightweight-machine-learning library. 
+Also every model written with StaticNet has static-sized parameters.
 
-8bit로 동작하는 AVR을 위한 ML 라이브러리를 만들면 어떨까? 라는 생각을 하였고, 이 프로젝트를 시작하게 되었습니다.
+## How it works?
 
-## 구현 모델
-
-- Linear Regression
-- Multi-Variable Linear Regression
-- Logistic Regression
-- Logistic Classification
+It based on C++ types, like Tensor<T, 300, 1, 28, 28>.
+Every tensor are decided its size on compile-time.
