@@ -21,4 +21,5 @@ file(GLOB SINGLENET_SOURCES
 add_library(singlenet STATIC ${SINGLENET_SOURCES})
 target_include_directories(singlenet PUBLIC ${SINGLENET_INCLUDE_DIR})
 
+include(CTest)
 add_subdirectory(test)

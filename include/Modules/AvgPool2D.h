@@ -35,9 +35,10 @@ namespace SingleNet
         Tensor<T, Batch, I, IDim, IDim> backward(const Tensor<T, Batch, I, ODim, ODim> &nextDelta, float learningRate)
         {
             Tensor<T, Batch, I, IDim, IDim> delta;
-            for (size_t i = 0; i < Batch; i++)
-                for (size_t k = 0; k < I; k++) 
-                    delta[i][k] = unpool<T, IDim, ODim>(nextDelta[i][k], unpool_func); 
+            // for (size_t i = 0; i < Batch; i++)
+            //     for (size_t k = 0; k < I; k++) 
+            //         delta[i][k] = unpool<T, IDim, ODim>(nextDelta[i][k], unpool_func); 
+                    
             return delta;
         }
 

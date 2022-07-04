@@ -32,12 +32,13 @@ namespace SingleNet
         template <size_t Batch>
         Tensor<T, Batch, Input> backward(const Tensor<T, Batch, Output> &nextDelta, float learningRate)
         {
-            Tensor<T, Batch, Input> input = this->memory(AccessType::Read, Tensor<T, Batch, Input>());
+            Tensor<T, Input, Batch> input = this->memory(AccessType::Read, Tensor<T, Batch, Input>()).template transpose<1, 0>();
 
-            weights -= (dot(get_transposed(input), nextDelta) / (float)Batch) * learningRate;
+            weights -= (dot(input, nextDelta) / (float)Batch) * learningRate;
             biases -= (nextDelta.reduce() / (float)Batch) * learningRate;
 
-            return dot(nextDelta, get_transposed(weights));
+            return dot(nextDelta, weights.template transpose<1, 0>());
+            return Tensor<T, Batch, Input>();
         }
 
     private:

@@ -43,7 +43,7 @@ namespace SingleNet
 
         // Softmax function
         template <size_t Input>
-        std::function<Tensor<float, Input>(const Tensor<float, Input>&)> Softmax = [](const Tensor<float, Input> &x)
+        std::function<Tensor<float, Input>(Tensor<float, Input>)> Softmax = [](Tensor<float, Input> x)
         {
             float max = x[argmax(x)];
             float sum = 0.0f;
