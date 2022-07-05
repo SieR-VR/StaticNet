@@ -12,45 +12,53 @@ namespace StaticNet
     };
 
     template <class T, size_t IDim, size_t ODim, size_t C, size_t FN>
-    class Conv2D<Tensor<T, C, IDim, IDim>, Tensor<T, FN, ODim, ODim>> 
+    class Conv2D<Tensor<T, C, IDim, IDim>, Tensor<T, FN, ODim, ODim>>
         : public Module<T>
     {
-        static constexpr size_t KDim = IDim-ODim+1;
+        static constexpr size_t KDim = IDim - ODim + 1;
 
     public:
-        Conv2D(Module<T> *parent) : Module<T>("Conv2D", parent, KDim * KDim + ODim * ODim) {};
+        Conv2D(Module<T> *parent) : Module<T>("Conv2D", parent, KDim * KDim + ODim * ODim){};
 
         template <size_t Batch>
         Tensor<T, Batch, FN, ODim, ODim> forward(const Tensor<T, Batch, C, IDim, IDim> &input)
         {
+            auto col = im2col<KDim>(input);
             this->memory(AccessType::Write, input);
-            auto result = conv(input, kernel);
+            auto kernel_reshaped = kernel.template reshape_ref<FN, C * KDim * KDim>();
+            Tensor<T, Batch, FN, ODim, ODim> result = dot(col, kernel_reshaped.template transpose<1, 0>())
+                                                          .template reshape<Batch, FN, ODim, ODim>();
+            for (size_t i = 0; i < Batch; i++)
+                for (size_t j = 0; j < FN; j++)
+                    for (size_t k = 0; k < ODim; k++)
+                        for (size_t l = 0; l < ODim; l++)
+                            result[i][j][k][l] += biases[j][0][0];
 
             return result;
         }
 
         template <size_t Batch>
-        Tensor<T, Batch, C, IDim, IDim> backward(const Tensor<T, Batch, FN, ODim, ODim> &nextDelta, float learningRate)
-        {   
-            // Tensor<T, FN * C, KDim, KDim> kernel_filped = flip(kernel.template reshape_ref<FN * C, KDim, KDim>());
+        Tensor<T, Batch, C, IDim, IDim> backward(const Tensor<T, Batch, FN, ODim, ODim> &dout, float learningRate)
+        {
+            auto db_pre = dout.reduce();
+            Tensor<T, FN, 1, 1> db;
+            for (size_t i = 0; i < FN; i++)
+                db[i][0][0] = db_pre[i].reduce().reduce();
 
-            Tensor<T, Batch, C, IDim, IDim> delta; // = conv(nextDelta, kernel_filped.template reshape_ref<C, FN, KDim, KDim>());
-            // auto nextDelta_reshaped = transpose(nextDelta.template reshape_ref<Batch, FN * ODim * ODim>())
-            //     .template reshape_ref<FN, Batch * ODim, ODim>();
+            auto dout_reshaped = dout.template transpose<1, 2, 3, 0>().template reshape<FN, Batch * ODim * ODim>();
+            auto input_transposed = this->memory(AccessType::Read, Tensor<T, Batch * ODim * ODim, C * KDim * KDim>());
 
-            // Tensor<T, Batch, C, IDim, IDim> input = this->memory(AccessType::Read, Tensor<T, Batch, C, IDim, IDim>());
-            // Tensor<T, FN, C, KDim, KDim> dk;
-            // for (size_t i = 0; i < Batch; i++)
-            //     for (size_t j = 0; j < FN; j++)
-            //         for (size_t k = 0; k < C; k++)
-            //             dk[j][k] += conv(input[i][k], nextDelta[i][j]);
+            auto dw_pre = dot(dout_reshaped, input_transposed);
+            auto dw = dw_pre.template reshape_ref<FN, C, KDim, KDim>();
 
-            // Tensor<T, FN, 1, 1> db;
+            auto w_reshaped = kernel.template reshape_ref<FN, C * KDim * KDim>();
+            auto dx_col = dot(w_reshaped.template transpose<1, 0>(), dout_reshaped);
+            auto dx = col2im<float, KDim, Batch, C, IDim>(dx_col);
 
-            // kernel -= dk * learningRate;
-            // biases -= db * learningRate;
+            kernel -= dw / (float)Batch * learningRate;
+            biases -= db / (float)Batch * learningRate;
 
-            return delta;
+            return dx;
         }
 
     private:

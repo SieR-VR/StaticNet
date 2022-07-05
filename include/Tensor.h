@@ -377,9 +377,20 @@ namespace StaticNet
         }
 
         template <size_t... P>
-        TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>> reshape()
+        Tensor<T, P...> reshape() const
         {
-            return TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>>(*this, slice_start);
+            Tensor<T, P...> result;
+            auto result_it = result.begin();
+            auto it = this->begin();
+
+            for (size_t i = 0; i < TensorUtils::get_size<P...>(); ++i)
+            {
+                *result_it = *it;
+                ++result_it;
+                ++it;
+            }
+
+            return result;
         }
 
         template <size_t i, size_t N>
@@ -514,7 +525,17 @@ namespace StaticNet
             return raw_iterator(this->origin->data, slice_start);
         }
 
+        const raw_iterator begin() const
+        {
+            return raw_iterator(this->origin->data, slice_start);
+        }
+
         raw_iterator end()
+        {
+            return raw_iterator(this->origin->data, slice_start, UINT64_MAX);
+        }
+
+        const raw_iterator end() const
         {
             return raw_iterator(this->origin->data, slice_start, UINT64_MAX);
         }
@@ -544,6 +565,18 @@ namespace StaticNet
         Tensor(This &other)
             : TensorRef<This, This>(this)
         {
+            if (other.data)
+            {
+                this->data = other.data;
+                other.data = nullptr;
+            }
+        }
+
+        template <size_t... P>
+        Tensor(Tensor<T, P...> &other)
+            : TensorRef<This, This>(this)
+        {
+            static_assert(TensorUtils::get_size<P...>() == TensorUtils::get_size<D, D_...>(), "Tensor size error");
             if (other.data)
             {
                 this->data = other.data;
@@ -627,6 +660,24 @@ namespace StaticNet
             }
         }
 
+        template <size_t... P>
+        const TensorRef<This, Tensor<T, P...>> reshape_ref() const
+        {
+            return TensorRef<This, Tensor<T, P...>>(this);
+        }
+
+        template <size_t... P>
+        TensorRef<This, Tensor<T, P...>> reshape_ref()
+        {
+            return TensorRef<This, Tensor<T, P...>>(this);
+        }
+
+        template <size_t... P>
+        Tensor<T, P...> reshape()
+        {
+            return Tensor<T, P...>(*this);
+        }
+
         ThisRef &ref()
         {
             return (*this);
@@ -701,28 +752,37 @@ namespace StaticNet
     }
 
     template <size_t K, class IOrigin, class T, size_t Batch, size_t C, size_t IDim>
-    auto im2col(const TensorRef<IOrigin, Tensor<T, Batch, C, IDim, IDim>> &input)
+    Tensor<T, Batch *(IDim - K + 1) * (IDim - K + 1), C * K * K> im2col(const TensorRef<IOrigin, Tensor<T, Batch, C, IDim, IDim>> &input)
     {
         constexpr size_t ODim = (IDim - K + 1);
         Tensor<T, Batch, C, K, K, ODim, ODim> col;
         for (int i = 0; i < K; i++)
-            for (int j = 0; j < K; j++) {
-                col.template slice<Batch, C, 1, 1, ODim, ODim>({ 0, 0, (size_t)i, (size_t)j, 0, 0 })
-                      .template reshape<Batch, C, ODim, ODim>() = input.template slice<Batch, C, ODim, ODim>({ 0, 0, (size_t)i, (size_t)j });
+            for (int j = 0; j < K; j++)
+            {
+                col.template slice<Batch, C, 1, 1, ODim, ODim>({0, 0, (size_t)i, (size_t)j, 0, 0}) =
+                    input.template slice<Batch, C, ODim, ODim>({0, 0, (size_t)i, (size_t)j})
+                        .template reshape<Batch, C, 1, 1, ODim, ODim>();
             }
 
-        Tensor<T, Batch * ODim * ODim, C * K * K> result = col.template transpose<0, 4, 5, 1, 2, 3>()
-                                                                .template reshape<Batch * ODim * ODim, C * K * K>();
-        std::cout << col.template transpose<0, 4, 5, 1, 2, 3>().template reshape<Batch * ODim * ODim, C * K * K>() << std::endl;
-        return result;
+        return col.template transpose<0, 4, 5, 1, 2, 3>()
+            .template reshape<Batch * ODim * ODim, C * K * K>();
     }
 
-    template <class IOrigin, class KOrigin, class T, size_t Batch, size_t FN, size_t C, size_t IDim, size_t KDim>
-    Tensor<T, Batch, FN, IDim - KDim + 1, IDim - KDim + 1> conv(const TensorRef<IOrigin, Tensor<T, Batch, C, IDim, IDim>> &input, const TensorRef<KOrigin, Tensor<T, FN, C, KDim, KDim>> &kernel)
+    template <class T, size_t K, size_t Batch, size_t C, size_t IDim>
+    Tensor<T, Batch, C, IDim, IDim> col2im(const Tensor<T, Batch *(IDim - K + 1) * (IDim - K + 1), C * K * K> &col)
     {
-        static_assert(IDim >= KDim, "Kernel must be same or bigger than input");
+        constexpr size_t ODim = (IDim - K + 1);
+        Tensor<T, Batch, C, K, K, ODim, ODim> col_reshaped = col.template reshape_ref<Batch, ODim, ODim, C, K, K>().template transpose<0, 3, 4, 5, 1, 2>();
 
-        Tensor<T, Batch, FN, IDim - KDim + 1, IDim - KDim + 1> result;
+        Tensor<T, Batch, C, IDim, IDim> result;
+        for (int i = 0; i < K; i++)
+            for (int j = 0; j < K; j++)
+            {
+                result.template slice<Batch, C, ODim, ODim>({0, 0, (size_t)i, (size_t)j}) +=
+                    col_reshaped.template slice<Batch, C, 1, 1, ODim, ODim>({0, 0, (size_t)i, (size_t)j, 0, 0})
+                        .template reshape<Batch, C, ODim, ODim>();
+            }
+
         return result;
     }
 

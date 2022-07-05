@@ -39,11 +39,8 @@ int main() {
     assert(test_reshaped[test_argmax] == 4);
 
     Tensor<int, 1, 1, 3, 3> test_4d = {{{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}}};
-    std::cout << test_4d << std::endl;
 
     Tensor<int, 4, 4> test_im2col = im2col<2>(test_4d);
-    Tensor<int, 4, 4> test_im2col_correct = {{1, 2, 4, 5}, {3, 6, 7, 8}, {9, 2, 5, 6}, {3, 6, 7, 8}};
-
-    std::cout << test_im2col << std::endl;
+    Tensor<int, 4, 4> test_im2col_correct = {{ 1, 2, 4, 5 }, { 2, 3, 5, 6 }, { 4, 5, 7, 8 }, { 5, 6, 8, 9 }};
     assert(test_im2col == test_im2col_correct);
 }
