@@ -21,7 +21,7 @@ namespace StaticNet
         template <size_t Batch>
         Tensor<T, Batch, Output> forward(const Tensor<T, Batch, Input> &input)
         {
-            this->memory(AccessType::Write, input);
+            this->template memory<Batch, Input>(AccessType::Write, input);
             auto result = dot(input, weights);
             for (size_t i = 0; i < Batch; i++)
                 result[i] += biases;
@@ -32,7 +32,7 @@ namespace StaticNet
         template <size_t Batch>
         Tensor<T, Batch, Input> backward(const Tensor<T, Batch, Output> &nextDelta, float learningRate)
         {
-            Tensor<T, Input, Batch> input = this->memory(AccessType::Read, Tensor<T, Batch, Input>()).template transpose<1, 0>();
+            Tensor<T, Input, Batch> input = this->template memory<Batch, Input>(AccessType::Read).template transpose<1, 0>();
 
             weights -= (dot(input, nextDelta) / (float)Batch) * learningRate;
             biases -= (nextDelta.reduce() / (float)Batch) * learningRate;

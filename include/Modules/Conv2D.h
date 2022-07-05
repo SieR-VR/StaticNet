@@ -24,7 +24,7 @@ namespace StaticNet
         Tensor<T, Batch, FN, ODim, ODim> forward(const Tensor<T, Batch, C, IDim, IDim> &input)
         {
             auto col = im2col<KDim>(input);
-            this->memory(AccessType::Write, input);
+            this->memory(AccessType::Write, col);
             auto kernel_reshaped = kernel.template reshape_ref<FN, C * KDim * KDim>();
             Tensor<T, Batch, FN, ODim, ODim> result = dot(col, kernel_reshaped.template transpose<1, 0>())
                                                           .template reshape<Batch, FN, ODim, ODim>();
@@ -46,10 +46,10 @@ namespace StaticNet
                 db[i][0][0] = db_pre[i].reduce().reduce();
 
             auto dout_reshaped = dout.template transpose<1, 2, 3, 0>().template reshape<FN, Batch * ODim * ODim>();
-            auto input_transposed = this->memory(AccessType::Read, Tensor<T, Batch * ODim * ODim, C * KDim * KDim>());
+            auto input_transposed = this->memory<Batch * ODim * ODim, C * KDim * KDim>(AccessType::Read);
 
             auto dw_pre = dot(dout_reshaped, input_transposed);
-            auto dw = dw_pre.template reshape_ref<FN, C, KDim, KDim>();
+            auto dw = dw_pre.template reshape<FN, C, KDim, KDim>();
 
             auto w_reshaped = kernel.template reshape_ref<FN, C * KDim * KDim>();
             auto dx_col = dot(w_reshaped.template transpose<1, 0>(), dout_reshaped);

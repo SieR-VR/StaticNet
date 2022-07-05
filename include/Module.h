@@ -39,10 +39,10 @@ namespace StaticNet
             return Tensor<T, Batch, Input>();
         };
 
-        template <size_t Batch, size_t ...InputSize>
-        Tensor<T, Batch, InputSize...> memory(AccessType access, const Tensor<T, Batch, InputSize...> &input = Tensor<T, Batch, InputSize...>())
+        template <size_t ...Dim>
+        const Tensor<T, Dim...> &memory(AccessType access, const Tensor<T, Dim...> &input = Tensor<T, Dim...>())
         {
-            static Tensor<T, Batch, InputSize...> mem;
+            static Tensor<T, Dim...> mem = Tensor<T, Dim...>();
 
             if (access == AccessType::Read)
             {
@@ -51,7 +51,7 @@ namespace StaticNet
             else if (access == AccessType::Write)
             {
                 mem = input;
-                return input;
+                return mem;
             }
 
             return input;

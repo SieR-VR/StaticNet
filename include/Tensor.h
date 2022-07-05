@@ -610,9 +610,11 @@ namespace StaticNet
         }
 
         template <size_t... P>
-        Tensor<T, P...> reshape()
+        Tensor<T, P...> reshape() const
         {
-            return Tensor<T, P...>(*this);
+            Tensor<T, P...> result;
+            memcpy(result.data, this->data, TensorUtils::get_size<D, D_...>() * sizeof(T));
+            return result;
         }
 
         ThisRef &ref()
@@ -709,7 +711,7 @@ namespace StaticNet
     Tensor<T, Batch, C, IDim, IDim> col2im(const Tensor<T, Batch *(IDim - K + 1) * (IDim - K + 1), C * K * K> &col)
     {
         constexpr size_t ODim = (IDim - K + 1);
-        Tensor<T, Batch, C, K, K, ODim, ODim> col_reshaped = col.template reshape_ref<Batch, ODim, ODim, C, K, K>().template transpose<0, 3, 4, 5, 1, 2>();
+        Tensor<T, Batch, C, K, K, ODim, ODim> col_reshaped = (col.template reshape<Batch, ODim, ODim, C, K, K>()).transpose<0, 3, 4, 5, 1, 2>();
 
         Tensor<T, Batch, C, IDim, IDim> result;
         for (int i = 0; i < K; i++)
