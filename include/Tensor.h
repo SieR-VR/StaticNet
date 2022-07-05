@@ -9,6 +9,7 @@
 #include <vector>
 #include <cstring>
 #include <cassert>
+#include <array>
 
 #include "Utils/Random.h"
 
@@ -87,12 +88,12 @@ namespace StaticNet
             typedef Tensor<T, FD> type;
         };
 
-        template <size_t D, size_t... D_>
-        size_t get_index(size_t i[sizeof...(D_) + 1])
+        template <size_t N, size_t i, size_t D, size_t... D_>
+        size_t get_index(std::array<size_t, N> &indices)
         {
-            if constexpr (sizeof...(D_))
+            if constexpr (i < N)
             {
-                return get_index<D_...>(i + 1) + i[0] * get_size<D_...>();
+                return get_index<N, i + 1, D_...>(i + 1) + indices[i] * get_size<D_...>();
             }
             else
             {
@@ -155,6 +156,44 @@ namespace StaticNet
                 return result;
             }
         }
+
+        template <size_t Rank, size_t i, size_t Dim, size_t... Dims>
+        bool increment_indices(std::array<size_t, Rank> &indices)
+        {
+            if constexpr (sizeof...(Dims))
+            {
+                if (increment_indices<Rank, i + 1, Dims...>(indices))
+                {
+                    indices[i]++;
+                    if (indices[i] == Dim)
+                    {
+                        indices[i] = 0;
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                indices[i]++;
+                if (indices[i] == Dim)
+                {
+                    indices[i] = 0;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
     }
 
     template <class T, size_t D, size_t... D_, size_t SliceD, size_t... SliceD_>
@@ -168,51 +207,6 @@ namespace StaticNet
 
         using This = TensorRef<Origin<T>, Tensor<T, SliceD, SliceD_...>>;
         using SubRef = typename TensorUtils::sub_cond_ref<T, Origin<T>, sizeof...(SliceD_), SliceD_...>::type;
-
-        class raw_iterator
-        {
-            T *data;
-            size_t _start_index;
-            size_t _index = 0;
-            size_t _slice_index = 0;
-
-        public:
-            static size_t get_iter_step(size_t _slice_index)
-            {
-                if constexpr (sizeof...(SliceD_))
-                {
-                    if (_slice_index / TensorUtils::get_size<SliceD_...>() != (_slice_index + 1) / TensorUtils::get_size<SliceD_...>())
-                        return TensorUtils::get_size<D_...>() - TensorUtils::get_size<SliceD_...>() + 1;
-                    else
-                        return TensorRef<Tensor<T, D_...>, Tensor<T, SliceD_...>>::raw_iterator::get_iter_step(_slice_index % TensorUtils::get_size<D_...>());
-                }
-                else
-                    return 1;
-            }
-
-            raw_iterator(T *data, size_t start = 0, size_t _slice_index = 0) : data(data), _start_index(start), _slice_index(_slice_index == UINT64_MAX ? TensorUtils::get_size<SliceD, SliceD_...>() : _slice_index)
-            {
-            }
-
-            T &operator*() { return data[_start_index + _index]; }
-
-            raw_iterator &operator++()
-            {
-                _index += get_iter_step(_slice_index);
-                _slice_index++;
-                return *this;
-            }
-
-            bool operator!=(const raw_iterator &other)
-            {
-                return this->_slice_index != other._slice_index;
-            }
-
-            bool operator==(const raw_iterator &other)
-            {
-                return this->_slice_index == other._slice_index;
-            }
-        };
 
         TensorRef(const Tensor<T, D, D_...> *const origin, size_t slice_start = 0)
             : slice_start(slice_start)
@@ -380,14 +374,11 @@ namespace StaticNet
         Tensor<T, P...> reshape() const
         {
             Tensor<T, P...> result;
-            auto result_it = result.begin();
-            auto it = this->begin();
-
-            for (size_t i = 0; i < TensorUtils::get_size<P...>(); ++i)
+            std::array<size_t, sizeof...(SliceD_) + 1> indices = {0};
+            for (size_t i = 0; i < TensorUtils::get_size<P...>(); i++)
             {
-                *result_it = *it;
-                ++result_it;
-                ++it;
+                result.data[i] = get(indices);
+                TensorUtils::increment_indices<sizeof...(SliceD_) + 1, 0, SliceD, SliceD_...>(indices);
             }
 
             return result;
@@ -520,26 +511,6 @@ namespace StaticNet
             }
         }
 
-        raw_iterator begin()
-        {
-            return raw_iterator(this->origin->data, slice_start);
-        }
-
-        const raw_iterator begin() const
-        {
-            return raw_iterator(this->origin->data, slice_start);
-        }
-
-        raw_iterator end()
-        {
-            return raw_iterator(this->origin->data, slice_start, UINT64_MAX);
-        }
-
-        const raw_iterator end() const
-        {
-            return raw_iterator(this->origin->data, slice_start, UINT64_MAX);
-        }
-
     public:
         Tensor<T, D, D_...> *origin = nullptr;
         size_t slice_start = 0;
@@ -608,40 +579,6 @@ namespace StaticNet
                 delete[] this->data;
         }
 
-        class raw_iterator
-        {
-            T *data;
-            size_t _start_index;
-            size_t _index = 0;
-            size_t _slice_index = 0;
-
-        public:
-            raw_iterator(T *data, size_t start, size_t _slice_index = 0) : data(data), _start_index(start)
-            {
-                if (_slice_index == UINT64_MAX)
-                    _slice_index = TensorUtils::get_size<D, D_...>();
-            }
-
-            T &operator*() { return data[_start_index + _index]; }
-
-            raw_iterator &operator++()
-            {
-                _index++;
-                _slice_index++;
-                return *this;
-            }
-
-            bool operator!=(const raw_iterator &other)
-            {
-                return this->_slice_index != other._slice_index;
-            }
-
-            bool operator==(const raw_iterator &other)
-            {
-                return this->_slice_index == other._slice_index;
-            }
-        };
-
         static This random()
         {
             if constexpr (sizeof...(D_))
@@ -707,9 +644,9 @@ namespace StaticNet
         for (int i = 0; i < D1; i++)
             for (int j = 0; j < D3; j++)
             {
-                auto a_sub = a[i];
-                auto b_sub = b_transposed[j];
-                result[i][j] = std::inner_product(a_sub.begin(), a_sub.end(), b_sub.begin(), T());
+                Tensor<T, D2> a_sub = a[i];
+                Tensor<T, D2> b_sub = b_transposed[j];
+                result[i][j] = std::inner_product(a_sub.data, a_sub.data + D2, b_sub.data, T());
             }
 
         return result;
