@@ -6,7 +6,7 @@
 
 #include "Tensor.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     namespace Defines
     {

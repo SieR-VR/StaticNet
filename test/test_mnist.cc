@@ -13,7 +13,7 @@ constexpr size_t Batch = 200;
 
 int main(int argc, char *argv[])
 {
-    using namespace SingleNet;
+    using namespace StaticNet;
     std::string path = argv[1];
 
     try

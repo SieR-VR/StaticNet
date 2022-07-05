@@ -5,7 +5,7 @@
 
 #include "Tensor.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     enum class AccessType
     {
@@ -65,7 +65,7 @@ namespace SingleNet
 }
 
 template <typename T>
-void print(const SingleNet::Module<T>& mod, size_t level = 0)
+void print(const StaticNet::Module<T>& mod, size_t level = 0)
 {
     std::string tab(level * 4, ' ');
 

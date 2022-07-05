@@ -6,7 +6,7 @@
 
 #include "Tensor.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     std::vector<unsigned char *> read_mnist_images(std::string full_path, int &number_of_images, int &image_size);
     std::vector<unsigned char> read_mnist_labels(std::string full_path, int &number_of_labels);

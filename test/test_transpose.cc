@@ -3,7 +3,7 @@
 #include "Tensor.h"
 
 int main() {
-    using namespace SingleNet;
+    using namespace StaticNet;
 
     static_assert(std::is_same<
         TensorUtils::transpose_helper<Tensor<float, 2, 3, 4, 5>, Transpose<1, 2, 3, 0>>::type,

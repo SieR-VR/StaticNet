@@ -4,7 +4,7 @@
 #include "Modules/Linear.h"
 #include "Modules/ReLU.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     class AffineNet : public Module<float>
     {

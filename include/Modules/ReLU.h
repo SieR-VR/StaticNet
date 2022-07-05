@@ -4,7 +4,7 @@
 #include "Module.h"
 #include "Defines.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     template <typename... T>
     class ReLU

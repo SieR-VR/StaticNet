@@ -3,7 +3,7 @@
 #include "Tensor.h"
 
 int main() {
-    using namespace SingleNet;
+    using namespace StaticNet;
 
     Tensor<int, 1, 2, 3> tensor = {{{ 1, 2, 3 }, { 4, 5, 6 }}};
     

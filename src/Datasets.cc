@@ -4,7 +4,7 @@
 
 #include "Datasets.h"
 
-std::vector<unsigned char *> SingleNet::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
+std::vector<unsigned char *> StaticNet::read_mnist_images(std::string full_path, int &number_of_images, int &image_size)
 {
     auto reverseInt = [](int i)
     {
@@ -48,7 +48,7 @@ std::vector<unsigned char *> SingleNet::read_mnist_images(std::string full_path,
     }
 }
 
-std::vector<unsigned char> SingleNet::read_mnist_labels(std::string full_path, int &number_of_labels)
+std::vector<unsigned char> StaticNet::read_mnist_labels(std::string full_path, int &number_of_labels)
 {
     auto reverseInt = [](int i)
     {

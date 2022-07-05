@@ -3,7 +3,7 @@
 
 #include "Module.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     template <typename... T>
     class Linear

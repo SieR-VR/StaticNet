@@ -3,7 +3,7 @@
 
 int main()
 {
-    using namespace SingleNet;
+    using namespace StaticNet;
 
     Tensor<int, 2, 2> int_test1 = {{1, 2}, {3, 4}};
     Tensor<int, 2, 2> int_test2 = {{5, 6}, {7, 8}};

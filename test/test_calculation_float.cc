@@ -4,7 +4,7 @@
 
 int main()
 {
-    using namespace SingleNet;
+    using namespace StaticNet;
 
     Tensor<float, 2, 2> float_test1 = {{0.1f, 0.2f}, {0.3f, 0.4f}};
     Tensor<float, 2, 2> float_test2 = {{0.5f, 0.6f}, {0.7f, 0.8f}};

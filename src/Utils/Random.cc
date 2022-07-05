@@ -1,6 +1,6 @@
 #include "Utils/Random.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     namespace Random
     {

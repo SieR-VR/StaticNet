@@ -1,5 +1,5 @@
 include_directories(${SHADERPP_INCLUDE_DIR})
-link_libraries(singlenet)
+link_libraries(StaticNet)
 
 add_executable(test_mnist test_mnist.cc)
 add_executable(test_calculation_int test_calculation_int.cc)
@@ -9,7 +9,7 @@ add_executable(test_module test_module.cc)
 add_executable(test_transpose test_transpose.cc)
 add_executable(test_constructor test_constructor.cc)
 add_executable(test_iterator test_iterator.cc)
-
+add_executable(test_slice test_slice.cc)
 
 add_test(test_mnist test_mnist)
 add_test(test_calculation_int test_calculation_int)
@@ -19,3 +19,4 @@ add_test(test_module test_module)
 add_test(test_transpose test_transpose)
 add_test(test_constructor test_constructor)
 add_test(test_iterator test_iterator)
+add_test(test_slice test_slice)

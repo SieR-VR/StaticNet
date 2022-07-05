@@ -8,7 +8,7 @@
 #include "Tensor.h"
 #include "Defines.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     // ------------------------------------------------------------------------
     // Base class for layers
@@ -198,6 +198,6 @@ namespace SingleNet
         BaseNet<float, Input, Output, Batch> *m_net;
         BaseActivation<float, Output, Batch> *m_activation;
     };
-}; // namespace SingleNet
+}; // namespace StaticNet
 
 #endif // FLOAT_LAYERS_H_

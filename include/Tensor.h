@@ -8,10 +8,11 @@
 #include <numeric>
 #include <vector>
 #include <cstring>
+#include <cassert>
 
 #include "Utils/Random.h"
 
-namespace SingleNet
+namespace StaticNet
 {
     template <typename...>
     class TensorRef;
@@ -26,6 +27,22 @@ namespace SingleNet
         constexpr size_t get_size()
         {
             return (... * Dims);
+        }
+
+        template <size_t R, size_t i, size_t Dim, size_t... Dims>
+        constexpr size_t get_size_limit()
+        {
+            if constexpr (sizeof...(Dims))
+            {
+                if constexpr (i < R)
+                    return get_size_limit<R, i - 1, Dims...>() * Dim;
+                else
+                    return get_size_limit<R, i - 1, Dims...>();
+            }
+            else
+            {
+                return Dim;
+            }
         }
 
         template <size_t... Dims>
@@ -123,7 +140,7 @@ namespace SingleNet
         };
 
         template <size_t Rank, size_t i, size_t TDim, size_t... TDims>
-        std::array<size_t, Rank> get_transposed_index(const std::array<size_t, Rank>& idx)
+        std::array<size_t, Rank> get_transposed_index(const std::array<size_t, Rank> &idx)
         {
             if constexpr (sizeof...(TDims))
             {
@@ -173,7 +190,8 @@ namespace SingleNet
                     return 1;
             }
 
-            raw_iterator(T *data, size_t start = 0, size_t _slice_index = 0) : data(data), _start_index(start), _slice_index(_slice_index == UINT64_MAX ? TensorUtils::get_size<SliceD, SliceD_...>() : _slice_index) {
+            raw_iterator(T *data, size_t start = 0, size_t _slice_index = 0) : data(data), _start_index(start), _slice_index(_slice_index == UINT64_MAX ? TensorUtils::get_size<SliceD, SliceD_...>() : _slice_index)
+            {
             }
 
             T &operator*() { return data[_start_index + _index]; }
@@ -203,6 +221,13 @@ namespace SingleNet
         }
 
         template <size_t OtherSlice, size_t... OtherSlice_>
+        TensorRef(TensorRef<Tensor<T, D, D_...>, Tensor<T, OtherSlice, OtherSlice_...>> &other, size_t slice_start = 0)
+            : slice_start(other.slice_start + slice_start)
+        {
+            this->origin = other.origin;
+        }
+
+        template <size_t OtherSlice, size_t... OtherSlice_>
         TensorRef(const TensorRef<Tensor<T, D, D_...>, Tensor<T, OtherSlice, OtherSlice_...>> &other, size_t slice_start = 0)
             : slice_start(other.slice_start + slice_start)
         {
@@ -211,16 +236,18 @@ namespace SingleNet
 
         SubRef operator[](size_t i)
         {
+            assert(i < SliceD);
             if constexpr (sizeof...(SliceD_))
-                return SubRef(origin, slice_start + i * TensorUtils::get_size<SliceD_...>());
+                return SubRef(origin, slice_start + i * TensorUtils::get_size_limit<sizeof...(SliceD_), sizeof...(D_), D, D_...>());
             else
                 return origin->data[slice_start + i];
         }
 
         const SubRef operator[](size_t i) const
         {
+            assert(i < SliceD);
             if constexpr (sizeof...(SliceD_))
-                return SubRef(origin, slice_start + i * TensorUtils::get_size<SliceD_...>());
+                return SubRef(origin, slice_start + i * TensorUtils::get_size_limit<sizeof...(SliceD_), sizeof...(D_), D, D_...>());
             else
                 return origin->data[slice_start + i];
         }
@@ -341,7 +368,7 @@ namespace SingleNet
             }
             else
             {
-                T result;
+                T result = T();
                 for (size_t i = 0; i < SliceD; i++)
                     result += (*this)[i];
 
@@ -350,20 +377,31 @@ namespace SingleNet
         }
 
         template <size_t... P>
-        Tensor<T, P...> reshape() const
+        TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>> reshape()
         {
-            static_assert(TensorUtils::get_size<P...>() == TensorUtils::get_size<SliceD, SliceD_...>(), "Tensor reshape error");
+            return TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>>(*this, slice_start);
+        }
 
-            Tensor<T, P...> result;
-            memcpy(result.data, this->origin->data, TensorUtils::get_size<SliceD, SliceD_...>() * sizeof(T));
-
-            return result;
+        template <size_t i, size_t N>
+        static size_t get_slice_size(const std::array<size_t, N> &indices)
+        {
+            if constexpr (i == N - 1)
+                return indices[i];
+            else
+                return indices[i] * TensorUtils::get_size_limit<sizeof...(SliceD_), sizeof...(D_), D, D_...>() +
+                       TensorRef<Tensor<T, D, D_...>, Tensor<T, SliceD_...>>::template get_slice_size<i + 1, N>(indices);
         }
 
         template <size_t... P>
-        TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>> reshape_ref()
+        TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>> slice(std::array<size_t, sizeof...(P)> indices)
         {
-            return TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>>(*this);
+            return TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>>(*this, slice_start + get_slice_size<0, sizeof...(P)>(indices));
+        }
+
+        template <size_t... P>
+        const TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>> slice(std::array<size_t, sizeof...(P)> indices) const
+        {
+            return TensorRef<Tensor<T, D, D_...>, Tensor<T, P...>>(*this, slice_start + get_slice_size<0, sizeof...(P)>(indices));
         }
 
         This deref() const
@@ -382,14 +420,16 @@ namespace SingleNet
         {
             if constexpr (i == sizeof...(TDim) - 1)
             {
-                for (size_t j = 0; j < SliceD; j++) {
+                for (size_t j = 0; j < SliceD; j++)
+                {
                     indices[i] = j;
                     dst.get(TensorUtils::get_transposed_index<sizeof...(TDim), 0, TDim...>(indices)) = src.get(indices);
                 }
             }
             else
             {
-                for (size_t j = 0; j < SliceD; j++) {
+                for (size_t j = 0; j < SliceD; j++)
+                {
                     indices[i] = j;
                     TensorRef<Tensor<T, D, D_...>, Tensor<T, SliceD_...>>::template assign_transpose<TDst, Th, i + 1, TDim...>(dst, src, indices);
                 }
@@ -397,7 +437,7 @@ namespace SingleNet
         }
 
         template <size_t N, size_t i = 0>
-        T& get(const std::array<size_t, N> &indices)
+        T &get(const std::array<size_t, N> &indices)
         {
             if constexpr (i == N - 1)
                 return (*this)[indices[i]];
@@ -406,7 +446,7 @@ namespace SingleNet
         }
 
         template <size_t N, size_t i = 0>
-        const T& get(const std::array<size_t, N> &indices) const
+        const T &get(const std::array<size_t, N> &indices) const
         {
             if constexpr (N - 1 == i)
                 return (*this)[indices[i]];
@@ -425,8 +465,7 @@ namespace SingleNet
                 typename TensorUtils::transpose_helper<Tensor<T, SliceD, SliceD_...>, Transpose<TDim...>>::type,
                 This,
                 0,
-                TDim...
-            >(result, *this, indices);
+                TDim...>(result, *this, indices);
 
             return result;
         }
@@ -505,7 +544,8 @@ namespace SingleNet
         Tensor(This &other)
             : TensorRef<This, This>(this)
         {
-            if (other.data) {
+            if (other.data)
+            {
                 this->data = other.data;
                 other.data = nullptr;
             }
@@ -543,7 +583,8 @@ namespace SingleNet
             size_t _slice_index = 0;
 
         public:
-            raw_iterator(T *data, size_t start, size_t _slice_index = 0) : data(data), _start_index(start) {
+            raw_iterator(T *data, size_t start, size_t _slice_index = 0) : data(data), _start_index(start)
+            {
                 if (_slice_index == UINT64_MAX)
                     _slice_index = TensorUtils::get_size<D, D_...>();
             }
@@ -659,11 +700,20 @@ namespace SingleNet
         return result;
     }
 
-    template <class IOrigin, class T, size_t Batch, size_t Feature, size_t IDim, size_t K>
-    Tensor<T, K * K, Batch * Feature * IDim * IDim> im2col(const TensorRef<IOrigin, Tensor<T, Batch, Feature, IDim, IDim>> &origin)
+    template <size_t K, class IOrigin, class T, size_t Batch, size_t C, size_t IDim>
+    auto im2col(const TensorRef<IOrigin, Tensor<T, Batch, C, IDim, IDim>> &input)
     {
-        Tensor<T, K * K, Batch * Feature * IDim * IDim> result;
+        constexpr size_t ODim = (IDim - K + 1);
+        Tensor<T, Batch, C, K, K, ODim, ODim> col;
+        for (int i = 0; i < K; i++)
+            for (int j = 0; j < K; j++) {
+                col.template slice<Batch, C, 1, 1, ODim, ODim>({ 0, 0, (size_t)i, (size_t)j, 0, 0 })
+                      .template reshape<Batch, C, ODim, ODim>() = input.template slice<Batch, C, ODim, ODim>({ 0, 0, (size_t)i, (size_t)j });
+            }
 
+        Tensor<T, Batch * ODim * ODim, C * K * K> result = col.template transpose<0, 4, 5, 1, 2, 3>()
+                                                                .template reshape<Batch * ODim * ODim, C * K * K>();
+        std::cout << col.template transpose<0, 4, 5, 1, 2, 3>().template reshape<Batch * ODim * ODim, C * K * K>() << std::endl;
         return result;
     }
 
@@ -700,10 +750,10 @@ namespace SingleNet
         return result;
     }
 
-    template <class Origin, class T, size_t D, size_t P>
+    template <size_t P, class Origin, class T, size_t D>
     Tensor<T, D + 2 * P> pad1d(const TensorRef<Origin, Tensor<T, D>> &input, T pad_value = T())
     {
-        Tensor<T, D + 2 * P> result = pad_value;
+        Tensor<T, D + 2 *P> result = pad_value;
 
         for (size_t i = 0; i < D; i++)
             result[P + i] = input[i];
@@ -711,7 +761,7 @@ namespace SingleNet
         return result;
     }
 
-    template <class Origin, class T, size_t D, size_t P>
+    template <size_t P, class Origin, class T, size_t D>
     Tensor<T, D + 2 * P, D + 2 * P> pad2d(const TensorRef<Origin, Tensor<T, D, D>> &input, T pad_value = T())
     {
         Tensor<T, D + 2 * P, D + 2 * P> result{pad_value};
@@ -724,7 +774,7 @@ namespace SingleNet
         return result;
     }
 
-    template <class Origin, class T, size_t C, size_t D, size_t P>
+    template <size_t P, class Origin, class T, size_t C, size_t D>
     Tensor<T, C, D + 2 * P, D + 2 * P> pad2d(const TensorRef<Origin, Tensor<T, C, D, D>> &input, T pad_value = T())
     {
         Tensor<T, C, D + 2 * P, D + 2 * P> result{pad_value};
@@ -736,7 +786,7 @@ namespace SingleNet
     }
 
     template <typename T, size_t IDim, size_t ODim>
-    Tensor<T, ODim, ODim> pool(const Tensor<T, IDim, IDim> &input, std::function<T(const Tensor<T, IDim / ODim, IDim / ODim>&)> pool_func)
+    Tensor<T, ODim, ODim> pool(const Tensor<T, IDim, IDim> &input, std::function<T(const Tensor<T, IDim / ODim, IDim / ODim> &)> pool_func)
     {
         constexpr size_t KernelSize = IDim / ODim;
         Tensor<T, ODim, ODim> result;
@@ -792,7 +842,7 @@ namespace SingleNet
 }
 
 template <class Origin, class T, size_t D, size_t... D_>
-std::ostream &operator<<(std::ostream &os, const SingleNet::template TensorRef<Origin, SingleNet::Tensor<T, D, D_...>> &tensor)
+std::ostream &operator<<(std::ostream &os, const StaticNet::template TensorRef<Origin, StaticNet::Tensor<T, D, D_...>> &tensor)
 {
     os << "[";
     for (size_t i = 0; i < D; i++)
